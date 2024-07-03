@@ -1,8 +1,12 @@
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.jetbrainsKotlinAndroid)
+    kotlin("kapt")
+    id("dagger.hilt.android.plugin")
 }
-
+/*kapt {
+    correctErrorTypes true
+}*/
 android {
     namespace = "silmex.apps.airdropcryptopoints"
     compileSdk = 34
@@ -126,4 +130,19 @@ dependencies {
 
     // optional - Paging 3 Integration
     implementation("androidx.room:room-paging:$room_version")
+
+
+    implementation("com.google.dagger:hilt-android:2.51.1")
+
+    kapt("com.google.dagger:hilt-compiler:2.51.1")
+
+    implementation("androidx.hilt:hilt-navigation-compose:1.0.0")
+
+/*    // For instrumentation tests
+    androidTestImplementation("com.google.dagger:hilt-android-testing:2.51.1")
+    kspAndroidTest("com.google.dagger:hilt-compiler:2.51.1")
+
+    // For local unit tests
+    testImplementation("com.google.dagger:hilt-android-testing:2.51.1")
+    kspTest("com.google.dagger:hilt-compiler:2.51.1")*/
 }

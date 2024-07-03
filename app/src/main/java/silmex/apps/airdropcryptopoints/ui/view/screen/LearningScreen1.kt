@@ -9,6 +9,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -43,65 +45,69 @@ import silmex.apps.airdropcryptopoints.ui.theme.average_text_size
 import silmex.apps.airdropcryptopoints.ui.theme.big_text_size
 import silmex.apps.airdropcryptopoints.ui.theme.itimStyle
 import silmex.apps.airdropcryptopoints.ui.theme.medium_text_size
-import silmex.apps.airdropcryptopoints.ui.view.composables.BalanceBar
 import silmex.apps.airdropcryptopoints.ui.view.composables.DashedLine
 import silmex.apps.airdropcryptopoints.ui.view.composables.MultiStyleText
 import silmex.apps.airdropcryptopoints.ui.view.composables.NavigateToButton
 
 @Composable
 fun LearningScreen1(navigateTo:()->Unit) {
-    Column(
-        Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp)
-            .padding(top = 64.dp), verticalArrangement = Arrangement.spacedBy(32.dp)
-    ) {
-        ProgressIndicator(1)
+    Box(Modifier.fillMaxSize()){
         Column(
             Modifier
-                .fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(24.dp)
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(32.dp)
         ) {
-            Text(
-                text = "Welcome to the Airdrop Crypto Points app",
-                color = MainTextColor,
-                fontFamily = itimStyle,
-                fontSize = big_text_size,
-                textAlign = TextAlign.Start
-            )
-            Text(
-                text = "Now we will tell you how to get rewards in a few clicks:",
-                color = MainTextColor,
-                fontFamily = itimStyle,
-                fontSize = average_text_size,
-                textAlign = TextAlign.Start
-            )
-
-        }
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceAround) {
-            Column(
-                Modifier.fillMaxWidth(0.717f), verticalArrangement = Arrangement.spacedBy(8.dp), horizontalAlignment = Alignment.Start) {
-
-                MultiStyleText(modifier = Modifier,colors = listOf(MainTextColor, ButtonTextColor, MainTextColor,SideTextColor), fontSize = average_text_size,textAlign = TextAlign.End, "Press ", """"Claim"""", " and receive your reward ","within 4 hours")
-             /*   MultiStyleText(modifier = Modifier.align(Alignment.End),colors = listOf(SideTextColor), fontSize = average_text_size,textAlign = TextAlign.End, "within 4 hours")*/
-            }
-            Spacer(modifier = Modifier.width(16.dp))
-            LearnDecoration(1)
-        }
-        DashedLine()
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceAround){
-            LearnDecoration(2, 74)
-            Spacer(modifier = Modifier.width(16.dp))
+            Spacer(modifier = Modifier.fillMaxHeight(0.02f))
+            ProgressIndicator(1)
             Column(
                 Modifier
-                    .fillMaxWidth()
-                    .padding(end = 32.dp), verticalArrangement = Arrangement.spacedBy(8.dp), horizontalAlignment = Alignment.Start) {
+                    .fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(24.dp)
+            ) {
+                Text(
+                    text = "Welcome to the Airdrop Crypto Points app",
+                    color = MainTextColor,
+                    fontFamily = itimStyle,
+                    fontSize = big_text_size,
+                    textAlign = TextAlign.Start
+                )
+                Text(
+                    text = "Now we will tell you how to get rewards in a few clicks:",
+                    color = MainTextColor,
+                    fontFamily = itimStyle,
+                    fontSize = average_text_size,
+                    textAlign = TextAlign.Start
+                )
 
-                MultiStyleText(modifier = Modifier,colors = listOf(MainTextColor, SideTextColor, MainTextColor), fontSize = average_text_size,textAlign = TextAlign.Start, "Use ", """"Upgrade""""," to get much more rewards")
             }
-        }
-        Column(verticalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceAround) {
+                Column(
+                    Modifier.fillMaxWidth(0.717f), verticalArrangement = Arrangement.spacedBy(8.dp), horizontalAlignment = Alignment.Start) {
+
+                    MultiStyleText(modifier = Modifier,colors = listOf(MainTextColor, ButtonTextColor, MainTextColor,SideTextColor), fontSize = average_text_size,textAlign = TextAlign.End, "Press ", """"Claim"""", " and receive your reward ","within 4 hours")
+                    /*   MultiStyleText(modifier = Modifier.align(Alignment.End),colors = listOf(SideTextColor), fontSize = average_text_size,textAlign = TextAlign.End, "within 4 hours")*/
+                }
+                Spacer(modifier = Modifier.width(16.dp))
+                LearnDecoration(1)
+            }
+            DashedLine()
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceAround){
+                LearnDecoration(2, 74)
+                Spacer(modifier = Modifier.width(16.dp))
+                Column(
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(end = 32.dp), verticalArrangement = Arrangement.spacedBy(8.dp), horizontalAlignment = Alignment.Start) {
+
+                    MultiStyleText(modifier = Modifier,colors = listOf(MainTextColor, SideTextColor, MainTextColor), fontSize = average_text_size,textAlign = TextAlign.Start, "Use ", """"Upgrade""""," to get much more rewards")
+                }
+            }
             Image(painterResource(id = R.drawable.present_illustration),"")
-            NavigateToButton("NEXT",Modifier.align(Alignment.CenterHorizontally),{navigateTo()})
+        }
+        Column (Modifier.align(Alignment.BottomCenter)){
+            Box(Modifier.fillMaxWidth().padding(horizontal = 16.dp)){
+                NavigateToButton("NEXT", Modifier, { navigateTo() })
+            }
+            Spacer(modifier = Modifier.fillMaxHeight(0.1f))
         }
     }
 }

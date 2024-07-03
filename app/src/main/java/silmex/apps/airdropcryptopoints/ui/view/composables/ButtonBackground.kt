@@ -1,5 +1,6 @@
 package silmex.apps.airdropcryptopoints.ui.view.composables
 
+import android.util.Log
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -18,6 +19,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -43,15 +45,21 @@ import silmex.apps.airdropcryptopoints.ui.theme.WhiteText
 import silmex.apps.airdropcryptopoints.ui.theme.big_text_size
 import silmex.apps.airdropcryptopoints.ui.theme.big_text_size_f
 import silmex.apps.airdropcryptopoints.ui.theme.itimStyle
+import silmex.apps.airdropcryptopoints.utils.StringUtils.getBalanceText
 
 @Composable
-fun ButtonBackground(isFarming: Boolean = false,
-                     isPressable: Boolean = false,
-                     onPress: (() -> Unit)? = null,
-                     content: (@Composable () -> Unit)?=null,
-                     text: String = ""){
+fun ButtonBackground(
+    multipliyer: Int,
+    balance: Float,
+    progress: Float,
+    timerText: String,
+    isFarming: Boolean = false,
+     isPressable: Boolean = false,
+     onPress: (() -> Unit)? = null,
+     content: (@Composable () -> Unit)?=null,
+     text: String = ""){
     if(isFarming){
-        ActiveBackground()
+        ActiveBackground(multipliyer,balance,progress,timerText)
     }
     else{
         InActiveBackground(isPressable = isPressable, onPress,content,"Claim")
@@ -154,18 +162,21 @@ fun InActiveBackground(
     }
 }
 @Composable
-fun ActiveBackground(){
+fun ActiveBackground(
+    multipliyer: Int,
+    balance: Float,
+    progress: Float,
+    timerText: String){
 
     Box(
         Modifier
             .fillMaxWidth()
             .height(66.dp)){
-
         Box(Modifier.fillMaxWidth()) {
             val brush = Brush.horizontalGradient(
                 0.0f to FarmingProgressBG,
-                0.5f to FarmingProgressBG,
-                0.50001f to FarmingProgressEndedBG,
+                progress to FarmingProgressBG,
+                progress+ 0.00001f to FarmingProgressEndedBG,
                 1.0f to FarmingProgressEndedBG)
             Box(
                 modifier = Modifier
@@ -202,7 +213,7 @@ fun ActiveBackground(){
                             Image(painterResource(id = R.drawable.balance_small_icon),"",)
 
                             Text(//usdt
-                                text = "3",
+                                text = getBalanceText(balance.toFloat()),
                                 color = WhiteText,
                                 textAlign = TextAlign.Center,fontFamily = itimStyle,
                                 fontSize = 20.sp
@@ -212,7 +223,7 @@ fun ActiveBackground(){
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)){
 
                         Text(//usdt
-                            text = "0:0:4",
+                            text = timerText,
                             color = WhiteText,
                             textAlign = TextAlign.Center,fontFamily = itimStyle,
                             fontSize = 20.sp
@@ -221,7 +232,7 @@ fun ActiveBackground(){
                             Image(painterResource(id = R.drawable.boost_small_icon),"",)
 
                             Text(//usdt
-                                text = "x1",
+                                text = "x$multipliyer",
                                 color = WhiteText,
                                 textAlign = TextAlign.Center,fontFamily = itimStyle,
                                 fontSize = 20.sp

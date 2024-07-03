@@ -2,9 +2,12 @@ package silmex.apps.airdropcryptopoints.ui.view.screen
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -31,30 +34,52 @@ import silmex.apps.airdropcryptopoints.ui.view.composables.NavigateToButton
 @Composable
 fun LearningScreen2(navigateTo:()->Unit){
 
-    Column(
-        Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp)
-            .padding(top = 64.dp), verticalArrangement = Arrangement.spacedBy(32.dp)
-    ) {
-        ProgressIndicator(2)
+    Box(Modifier.fillMaxSize()) {
         Column(
             Modifier
-                .fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(70.dp)
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(32.dp)
         ) {
-            Text(
-                text = "Invite friends and get 10 000 Crypto Points",
-                color = MainTextColor,
-                fontFamily = itimStyle,
-                fontSize = big_text_size,
-                textAlign = TextAlign.Start
-            )
+            Spacer(modifier = Modifier.fillMaxHeight(0.02f))
+            ProgressIndicator(2)
+            Column(
+                Modifier
+                    .fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(70.dp)
+            ) {
+                Text(
+                    text = "Invite friends and get 10 000 Crypto Points",
+                    color = MainTextColor,
+                    fontFamily = itimStyle,
+                    fontSize = big_text_size,
+                    textAlign = TextAlign.Start
+                )
 
-            MultiStyleText(modifier = Modifier,colors = listOf(
-                MainTextColor, ButtonTextColor, MainTextColor, SideTextColor
-            ), fontSize = average_text_size,textAlign = TextAlign.Center, "Every new user who entered ","your promo code"," will ", "receive")
-            Image(painter = painterResource(id = R.drawable.get_bonus_illustration), contentDescription = "", modifier = Modifier.align(Alignment.CenterHorizontally).fillMaxWidth(), contentScale = ContentScale.FillWidth)
-            NavigateToButton("NEXT",Modifier.fillMaxWidth().align(Alignment.CenterHorizontally),{navigateTo()})
+                MultiStyleText(
+                    modifier = Modifier,
+                    colors = listOf(
+                        MainTextColor, ButtonTextColor, MainTextColor, SideTextColor
+                    ),
+                    fontSize = average_text_size,
+                    textAlign = TextAlign.Center,
+                    "Every new user who entered ",
+                    "your promo code",
+                    " will ",
+                    "receive"
+                )
+                Image(
+                    painter = painterResource(id = R.drawable.get_bonus_illustration),
+                    contentDescription = "",
+                    modifier = Modifier.align(Alignment.CenterHorizontally).fillMaxWidth(),
+                    contentScale = ContentScale.FillWidth
+                )
+            }
+        }
+
+        Column (Modifier.align(Alignment.BottomCenter)){
+            Box(Modifier.fillMaxWidth().padding(horizontal = 16.dp)){
+                NavigateToButton("NEXT", Modifier, { navigateTo() })
+            }
+            Spacer(modifier = Modifier.fillMaxHeight(0.1f))
         }
     }
 }

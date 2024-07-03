@@ -1,10 +1,7 @@
 package silmex.apps.airdropcryptopoints.ui.view.screen
 
-import android.annotation.SuppressLint
-import android.graphics.ColorFilter
 import android.graphics.Paint
-import android.graphics.Typeface
-import android.graphics.fonts.FontStyle
+import android.util.Log
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -23,30 +20,19 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.geometry.center
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.Fill
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.drawText
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.core.content.res.ResourcesCompat
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.delay
@@ -58,56 +44,36 @@ import silmex.apps.airdropcryptopoints.ui.theme.MainBG
 import silmex.apps.airdropcryptopoints.ui.theme.MainTextColor
 import silmex.apps.airdropcryptopoints.ui.theme.SideTextColor
 import silmex.apps.airdropcryptopoints.ui.theme.WhiteText
-import silmex.apps.airdropcryptopoints.ui.theme.big_text_size
-import silmex.apps.airdropcryptopoints.ui.theme.itimStyle
 import silmex.apps.airdropcryptopoints.ui.theme.medium_text_size
 import silmex.apps.airdropcryptopoints.ui.view.composables.BalanceBar
 import silmex.apps.airdropcryptopoints.ui.view.composables.ButtonBackground
-import kotlin.math.cos
-import kotlin.math.sin
+import silmex.apps.airdropcryptopoints.viewmodel.HomeViewModel
 
 @Composable
-fun HomeScreen(){
-    var currentBoost by remember { mutableStateOf(MULTIPLYER_ENUM.MULTYPLIER_1x) }
-    var isFarming by remember {
-        mutableStateOf(false)
-    }
-    val isPressable by remember {
-        mutableStateOf(true)
-    }
-    LaunchedEffect(true) {
-        while(true){
+fun HomeScreen(viewModel: HomeViewModel){
+    val currentBoost = viewModel.currentChosenMultipliyer.observeAsState()
+    val balance by viewModel.balance.observeAsState()
+    val isMining by viewModel.isMining.observeAsState()
+    val timerText by viewModel.timerText.observeAsState()
+    val progress by viewModel.progress.observeAsState()
+    val coins by viewModel.coins.observeAsState()
 
-            delay(1000L)
-            when(currentBoost){
-                MULTIPLYER_ENUM.MULTYPLIER_1x-> currentBoost = MULTIPLYER_ENUM.MULTYPLIER_2x
-                MULTIPLYER_ENUM.MULTYPLIER_2x -> currentBoost = MULTIPLYER_ENUM.MULTYPLIER_3x
-                MULTIPLYER_ENUM.MULTYPLIER_3x -> currentBoost = MULTIPLYER_ENUM.MULTYPLIER_5x
-                MULTIPLYER_ENUM.MULTYPLIER_5x -> currentBoost = MULTIPLYER_ENUM.MULTYPLIER_8x
-                MULTIPLYER_ENUM.MULTYPLIER_8x -> currentBoost = MULTIPLYER_ENUM.MULTYPLIER_13x
-                MULTIPLYER_ENUM.MULTYPLIER_13x -> currentBoost = MULTIPLYER_ENUM.MULTYPLIER_21x
-                MULTIPLYER_ENUM.MULTYPLIER_21x -> currentBoost = MULTIPLYER_ENUM.MULTYPLIER_34x
-                MULTIPLYER_ENUM.MULTYPLIER_34x -> currentBoost = MULTIPLYER_ENUM.MULTYPLIER_55x
-                MULTIPLYER_ENUM.MULTYPLIER_55x -> currentBoost = MULTIPLYER_ENUM.MULTYPLIER_1x
-            }
-        }
-    }
     Column(
         Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp)
             .padding(top = 32.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        val isActive = remember {
-            mutableStateOf(false)
-        }
-        BalanceBar()
-        UpgradeWheel(isActive, currentBoost)
-        ClaimButton(isFarming,isPressable, {isFarming = true})
+        BalanceBar(balance!!,progress!!, isMining!!,coins!!, viewModel::removeCoin)
+        UpgradeWheel(isMining!!, currentBoost) { viewModel.upgradeWheelClick() }
+        ClaimButton(currentBoost!!.value!!.value,balance!!,
+            progress!!,timerText!!,isMining!!,!isMining!!, {
+            viewModel.claimClick()
+        })
     }
 }
 
 @Composable
-fun UpgradeWheel(isActive: MutableState<Boolean>, currentBoost: MULTIPLYER_ENUM) {
+fun UpgradeWheel(isActive: Boolean, currentBoost: State<MULTIPLYER_ENUM?>, upgradeWheelClick: ()->Unit) {
 
 
 
@@ -132,18 +98,19 @@ fun UpgradeWheel(isActive: MutableState<Boolean>, currentBoost: MULTIPLYER_ENUM)
 
             }
         }
-        LaunchedEffect(true) {
-            if(!isActive.value){
-                while(!isActive.value){
-                    paddingValues1 = 16f
+        LaunchedEffect(currentBoost.value) {
+            if(currentBoost.value!=MULTIPLYER_ENUM.MULTYPLIER_1x){
+
+                while(true){
+                    paddingValues1 = 4f
                     delay(600)
                     paddingValues1 = 0f
                     delay(600)
                 }
             }
             else{
-                while(isActive.value){
-                    paddingValues1 = 4f
+                while(true){
+                    paddingValues1 = 16f
                     delay(600)
                     paddingValues1 = 0f
                     delay(600)
@@ -155,16 +122,22 @@ fun UpgradeWheel(isActive: MutableState<Boolean>, currentBoost: MULTIPLYER_ENUM)
                 .size(120.dp)
                 .align(Alignment.Center)) {
             Image(
-                painter = painterResource(id = if(isActive.value) R.drawable.upgrade_center_active else R.drawable.upgrade_center_unactive),
+                painter = painterResource(id = if(currentBoost.value!=MULTIPLYER_ENUM.MULTYPLIER_1x) R.drawable.upgrade_center_active else R.drawable.upgrade_center_unactive),
                 contentDescription = null,
-                modifier = Modifier.padding(animatedPaddingValues1.dp).align(Alignment.Center)
+                modifier = Modifier
+                    .padding(animatedPaddingValues1.dp)
+                    .align(Alignment.Center)
 
-                    .clickable(interactionSource = remember{ MutableInteractionSource() }, indication = null,) {
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                    ) {
 
                         MainScope().launch {
                             paddingValues1 = 12f
                             delay(300)
                             paddingValues1 = 0f
+                            upgradeWheelClick()
                         }
                     }
             )
@@ -174,7 +147,7 @@ fun UpgradeWheel(isActive: MutableState<Boolean>, currentBoost: MULTIPLYER_ENUM)
 
 
 @Composable
-fun OuterCircle(enumValue: MULTIPLYER_ENUM) {
+fun OuterCircle(enumValue: State<MULTIPLYER_ENUM?>,) {
     val segments = listOf(
         MULTIPLYER_ENUM.MULTYPLIER_1x.value,
         MULTIPLYER_ENUM.MULTYPLIER_2x.value,
@@ -193,7 +166,7 @@ fun OuterCircle(enumValue: MULTIPLYER_ENUM) {
             val canvasHeight = size.height
             val radius = canvasWidth / 2f
             val angleStep = 360f / segments.size
-            val currentLabel = enumValue.ordinal
+            val currentLabel = enumValue!!.value!!.ordinal
             val offset = -80f
             val selectedOffset = -8f
             val optimisingOffset = 28f
@@ -246,11 +219,17 @@ fun OuterCircle(enumValue: MULTIPLYER_ENUM) {
 
 
 @Composable
-fun ClaimButton(isFarming: Boolean,
-                isPressable: Boolean,
-                onPress: (() -> Unit)? = null,
-                content: (@Composable () -> Unit)?=null){
-    ButtonBackground(isFarming,isPressable,{
+fun ClaimButton(
+    multipliyer: Int,
+    balance: Float,
+    progress: Float,
+    timerText: String,
+    isFarming: Boolean,
+    isPressable: Boolean,
+    onPress: (() -> Unit)? = null,
+    content: (@Composable () -> Unit)?=null
+){
+    ButtonBackground(multipliyer,balance,progress,timerText,isFarming,isPressable,{
         if (onPress != null) {
             onPress()
         }

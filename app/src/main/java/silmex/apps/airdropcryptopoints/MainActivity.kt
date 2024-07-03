@@ -1,45 +1,85 @@
 package silmex.apps.airdropcryptopoints
 
-import android.content.pm.ApplicationInfo
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.view.View
-import android.view.WindowManager
+import android.widget.Toast
+import android.widget.Toast.LENGTH_SHORT
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.Typeface
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
+import androidx.lifecycle.MutableLiveData
+import dagger.hilt.android.AndroidEntryPoint
+import silmex.apps.airdropcryptopoints.ui.view.CustomToastView
 import silmex.apps.airdropcryptopoints.ui.view.composables.Navigation
 
+
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-/*        val isDebuggable = 0 != applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE
 
-        if(!isDebuggable){
-            getWindow().setFlags(
-                WindowManager.LayoutParams.FLAG_FULLSCREEN,
-                WindowManager.LayoutParams.FLAG_FULLSCREEN);
-            getWindow().setFlags(
-                WindowManager.LayoutParams.FLAG_SECURE,
-                WindowManager.LayoutParams.FLAG_SECURE);
-        }*/
+        enableAntiScreenshoting()
 
-        WindowCompat.setDecorFitsSystemWindows(window,false)
+        setUpObservers()
+
         setContent {
-
             Navigation()
-
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        isOnPaused.value = false
+    }
+
+    override fun onPause() {
+        super.onPause()
+        isOnPaused.value = true
+    }
+
+
+    fun setUpObservers(){
+
+        shareIntent.observeForever { shareIntent ->
+            if (shareIntent != null)
+                startActivity(shareIntent)
+        }
+
+        toastText.observeForever { toastText ->
+            if(!toastText.isNullOrEmpty()){
+                val toastView = CustomToastView(this, hasSucceded)
+                toastView.setMessage(toastText)
+
+                val toast = Toast(this)
+                toast.duration = LENGTH_SHORT
+                toast.view = toastView
+                toast.show()
+            }
+        }
+
+    }
+
+
+    private fun enableAntiScreenshoting(){
+
+        /*        val isDebuggable = 0 != applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE
+
+                if(!isDebuggable){
+                    getWindow().setFlags(
+                        WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                        WindowManager.LayoutParams.FLAG_FULLSCREEN);
+                    getWindow().setFlags(
+                        WindowManager.LayoutParams.FLAG_SECURE,
+                        WindowManager.LayoutParams.FLAG_SECURE);
+                }*/
+
+        WindowCompat.setDecorFitsSystemWindows(window,false)
+    }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
@@ -56,5 +96,17 @@ class MainActivity : ComponentActivity() {
                     View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or
                     View.SYSTEM_UI_FLAG_FULLSCREEN or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY)
         }
+    }
+
+    //object for interacting with activity
+    companion object{
+        var isOnPaused = MutableLiveData<Boolean>(false)
+
+        var shareIntent = MutableLiveData<Intent>();
+
+        var toastText: MutableLiveData<String> = MutableLiveData<String>();
+
+        var hasSucceded: Boolean? = null;
+
     }
 }

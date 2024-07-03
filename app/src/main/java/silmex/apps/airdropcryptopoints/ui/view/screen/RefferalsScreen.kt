@@ -1,5 +1,6 @@
 package silmex.apps.airdropcryptopoints.ui.view.screen
 
+import android.util.Log
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -22,8 +23,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -38,6 +41,8 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.MutableLiveData
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -46,6 +51,7 @@ import silmex.apps.airdropcryptopoints.ui.theme.AltBG
 import silmex.apps.airdropcryptopoints.ui.theme.AltBorder
 import silmex.apps.airdropcryptopoints.ui.theme.ButtonTextColor
 import silmex.apps.airdropcryptopoints.ui.theme.MainTextColor
+import silmex.apps.airdropcryptopoints.ui.theme.OffTextColor
 import silmex.apps.airdropcryptopoints.ui.theme.ShadeBackground
 import silmex.apps.airdropcryptopoints.ui.theme.WhiteText
 import silmex.apps.airdropcryptopoints.ui.theme.average_text_size
@@ -53,37 +59,33 @@ import silmex.apps.airdropcryptopoints.ui.theme.big_text_size
 import silmex.apps.airdropcryptopoints.ui.theme.itimStyle
 import silmex.apps.airdropcryptopoints.ui.view.composables.BalanceBar
 import silmex.apps.airdropcryptopoints.ui.view.composables.*
+import silmex.apps.airdropcryptopoints.viewmodel.RefferralViewModel
 
 @Composable
-fun RefferalsScreen(){
-    val code = 5769475957
-
-
-
-
-    val clipboardManager: ClipboardManager = LocalClipboardManager.current
-
-
-    var textValue = remember {
-        mutableStateOf("")
-    }
+fun RefferalsScreen(viewModel: RefferralViewModel){
+    val balance by viewModel.balance.observeAsState()
+    val isMining by viewModel.isMining.observeAsState()
+    val coins by viewModel.coins.observeAsState()
+    val code = viewModel.mainDataRepository.referralCode
+    val textValue = viewModel.textValue
+    val progress by viewModel.progress.observeAsState()
+    val limitOfCode = viewModel.limitOfCode
 
     Column(
         Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp)
             .padding(top = 32.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        BalanceBar()
+        BalanceBar(balance!!,progress!!, isMining!!,coins!!, viewModel::removeCoin)
         InviteRefferalTextBlock()
-        CopyCodeBlock(code,{},{
-            clipboardManager.setText(AnnotatedString(code.toString()))})
+        CopyCodeBlock(code,{
+                           viewModel.shareCodeOnClick()
+        },{
+            viewModel.copyCodeOnClick()
+        })
         EnterRefferalTextBlock()
-        InputRefferalBlock(textValue) {
-            if (code.toString().length >= 10) {
-                //toast
-            } else {
-                //badToast
-            }
+        InputRefferalBlock(limitOfCode,textValue) {
+            viewModel.getBonusFromCodeOnClick()
         }
     }
 }
@@ -97,7 +99,7 @@ fun InviteRefferalTextBlock(){
     }
 }
 @Composable
-fun CopyCodeBlock(code:Long,onClick1:()->Unit,onClick2: () -> Unit){
+fun CopyCodeBlock(code:Int,onClick1:()->Unit,onClick2: () -> Unit){
 
     var paddingValues by remember { mutableStateOf(0f) }
     var paddingValues2 by remember { mutableStateOf(0f) }
@@ -112,18 +114,27 @@ fun CopyCodeBlock(code:Long,onClick1:()->Unit,onClick2: () -> Unit){
         animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing)
     )
     InActiveBackground(content = {
-        Row(modifier = Modifier.padding(horizontal = 12.dp).fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween){
+        Row(modifier = Modifier
+            .padding(horizontal = 12.dp)
+            .fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween){
             Column(horizontalAlignment = Alignment.Start) {
                 Text("Your referral promo code", fontSize = average_text_size, color = WhiteText, fontFamily = itimStyle, textAlign = TextAlign.Start)
                 Text(code.toString(), fontSize = big_text_size, color = WhiteText, fontFamily = itimStyle, textAlign = TextAlign.Start)
 
             }
             Row(horizontalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.fillMaxHeight()){
-                Box(Modifier.size(64.dp).fillMaxHeight().padding(vertical = 6.dp)){
+                Box(
+                    Modifier
+                        .size(64.dp)
+                        .fillMaxHeight()
+                        .padding(vertical = 6.dp)){
                     Image(painter = painterResource(id = R.drawable.share_button), contentDescription = "",modifier = Modifier
-                        .size((64-animatedPaddingValues).dp)
+                        .size((64 - animatedPaddingValues).dp)
                         .align(Alignment.Center)
-                        .clickable(interactionSource = remember{ MutableInteractionSource() }, indication = null) {
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null
+                        ) {
                             MainScope().launch {
                                 paddingValues = 24f
                                 delay(300)
@@ -133,11 +144,18 @@ fun CopyCodeBlock(code:Long,onClick1:()->Unit,onClick2: () -> Unit){
                         }, contentScale = ContentScale.FillHeight)//clickable
 
                 }
-                Box(Modifier.size(64.dp).fillMaxHeight().padding(vertical = 6.dp)){
+                Box(
+                    Modifier
+                        .size(64.dp)
+                        .fillMaxHeight()
+                        .padding(vertical = 6.dp)){
                     Image(painter = painterResource(id = R.drawable.copy_button), contentDescription = "",modifier = Modifier
-                        .size((64-animatedPaddingValues2).dp)
+                        .size((64 - animatedPaddingValues2).dp)
                         .align(Alignment.Center)
-                        .clickable(interactionSource = remember{ MutableInteractionSource() }, indication = null) {
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null
+                        ) {
                             MainScope().launch {
                                 paddingValues2 = 24f
                                 delay(300)
@@ -155,8 +173,11 @@ fun EnterRefferalTextBlock(){
     Text("Enter my referral code (insert referral code here) and receive “n” crypto points in the “Name” application (link to application)", fontSize = average_text_size, color = MainTextColor, fontFamily = itimStyle, textAlign = TextAlign.Center)
 
 }
+
+
 @Composable
-fun InputRefferalBlock(textValue: MutableState<String>, onClick:()->Unit){
+fun InputRefferalBlock(limitOfCode: Int,textValue: MutableLiveData<String>, onClick:()->Unit){
+    val textValueState = textValue.observeAsState(initial = "")
     Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier
         .height(64.dp)
         .border(
@@ -169,18 +190,21 @@ fun InputRefferalBlock(textValue: MutableState<String>, onClick:()->Unit){
             .fillMaxWidth(0.1f)
             .padding(start = 12.dp))
 
-        val limit = 10
         var isOverCount by remember{
-            mutableStateOf(textValue.value.count() <= limit)
+            mutableStateOf(textValue.value!!.count() <= limitOfCode)
+        }
+        var isTextEmpty by remember{
+            mutableStateOf(textValue.value!!.isEmpty())
         }
         Box(modifier = Modifier.fillMaxWidth(0.8f)){
 
             BasicTextField(
-                value = textValue.value,
+                value = textValueState.value,
                 onValueChange = { newText ->
-                    isOverCount = textValue.value.count() <= limit
+                    isOverCount = newText.count() <= limitOfCode
                     if(isOverCount)
                         textValue.value = newText
+                    isTextEmpty = textValue.value!!.isEmpty()
                 },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -190,7 +214,7 @@ fun InputRefferalBlock(textValue: MutableState<String>, onClick:()->Unit){
                 textStyle = TextStyle(
                     fontFamily = itimStyle,
                     fontSize = average_text_size,
-                    color = MainTextColor
+                    color =MainTextColor
                 ),
                 decorationBox = { innerTextField ->
                     Box(
@@ -199,6 +223,9 @@ fun InputRefferalBlock(textValue: MutableState<String>, onClick:()->Unit){
 
 
                     ) {
+                        if(isTextEmpty){
+                            Text("Enter code here", fontSize = average_text_size, color = OffTextColor, fontFamily = itimStyle, textAlign = TextAlign.Start)
+                        }
 
                         innerTextField()
                     }
@@ -214,8 +241,11 @@ fun InputRefferalBlock(textValue: MutableState<String>, onClick:()->Unit){
         )
         Box(Modifier.padding(end = 12.dp)){
             Image(painterResource(id = R.drawable.get_right_icon),"",modifier = Modifier
-                .size((48-animatedPaddingValues).dp)
-                .clickable(interactionSource = remember{ MutableInteractionSource() }, indication = null) {
+                .size((48 - animatedPaddingValues).dp)
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null
+                ) {
                     MainScope().launch {
                         paddingValues = 8f
                         delay(300)

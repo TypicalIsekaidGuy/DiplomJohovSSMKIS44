@@ -2,9 +2,11 @@ package silmex.apps.airdropcryptopoints.data.model;
 
 import com.google.gson.annotations.SerializedName;
 
-public class Transaction {
+import java.util.Date;
+
+public class Transaction implements Comparable<Transaction> {
     @SerializedName("creation_time")
-    public String creationTime;
+    public Date creationTime;
     @SerializedName("value")
     public float value;
     @SerializedName("server_time")
@@ -18,7 +20,7 @@ public class Transaction {
     @SerializedName("status")
     public int status;
 
-    public Transaction(String creationTime, float value, String serverTime, String source, String email, String promocode, int status) {
+    public Transaction(Date creationTime, float value, String serverTime, String source, String email, String promocode, int status) {
         this.creationTime = creationTime;
         this.value = value;
         this.serverTime = serverTime;
@@ -27,13 +29,10 @@ public class Transaction {
         this.promocode = promocode;
         this.status = status;
     }
-/*    public Transaction(TransactionTable trans){
-        this.creationTime = trans.creationTime;
-        this.value = trans.value;
-        this.serverTime = trans.serverTime;
-        this.source = trans.source;
-        this.email = trans.email;
-        this.promocode = trans.promocode;
-        this.status = trans.status;
-    }*/
+    @Override
+    public int compareTo(Transaction o) {
+        if(this.creationTime==null)
+            return -1;
+        return this.creationTime.compareTo(o.creationTime);
+    }
 }

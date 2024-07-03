@@ -9,5 +9,6 @@
     <color name="white">#FFFFFFFF</color>
     <color name="toast_succeded_text">#FFDAF4E1</color>
     <color name="toast_not_succeded_text">#FFF4DFDA</color>
+    <color name="main_text_color">#FF1E1E1E</color>
     <color name="transparent">#00FF3B44</color>
 </resources>

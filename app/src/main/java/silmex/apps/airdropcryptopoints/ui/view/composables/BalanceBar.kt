@@ -1,30 +1,27 @@
 package silmex.apps.airdropcryptopoints.ui.view.composables
 
 import android.util.Log
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.rememberAsyncImagePainter
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import silmex.apps.airdropcryptopoints.R
+import silmex.apps.airdropcryptopoints.ui.theme.AlmostTransparent
 import silmex.apps.airdropcryptopoints.ui.theme.AltBG
 import silmex.apps.airdropcryptopoints.ui.theme.FarmingProgressBG
 import silmex.apps.airdropcryptopoints.ui.theme.MainBG
@@ -33,38 +30,39 @@ import silmex.apps.airdropcryptopoints.ui.theme.SideTextColor
 import silmex.apps.airdropcryptopoints.ui.theme.big_text_size
 import silmex.apps.airdropcryptopoints.ui.theme.itimStyle
 import silmex.apps.airdropcryptopoints.ui.theme.medium_text_size
+import silmex.apps.airdropcryptopoints.utils.IntegerUtils
 import silmex.apps.airdropcryptopoints.utils.StringUtils.getBalanceText
-import androidx.compose.animation.core.*
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import coil.compose.rememberImagePainter
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.*
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import coil.compose.rememberImagePainter
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import silmex.apps.airdropcryptopoints.data.model.MULTIPLYER_ENUM
 
 @Composable
-fun BalanceBar() {
-    val isFarming = false
-    val balance = 1
-    Box(
+fun BalanceBar(balance: Float,progress: Float, isFarming: Boolean, coins: List<Coin?>, onRemove: (Int) -> Unit) {
+    var progress = 1-progress
+    var image by remember { mutableStateOf(R.drawable.empty) }
+    LaunchedEffect(progress) {
+        if(progress!=1f){
+
+            when(progress){
+                in 0f..(1f / 5f) -> image = R.drawable.full_1
+                in (1f / 5f)..(1f / 5f)*2 -> image = R.drawable.full_2
+                in (1f / 5f)*2..(1f / 5f)*3 -> image = R.drawable.full_3
+                in (1f / 5f)*3 ..(1f / 5f)*4 -> image = R.drawable.full_4
+                in (1f / 5f)*4..1f -> image = R.drawable.full_5
+            }
+        }
+        else{
+            image = R.drawable.empty
+        }
+    }
+    var finalColorPlus by remember { mutableStateOf(AlmostTransparent) }
+    val animatedColorPlus by animateColorAsState(
+        targetValue = finalColorPlus,
+        animationSpec = tween(durationMillis = 400)
+    )
+    LaunchedEffect(balance) {
+        finalColorPlus = SideTextColor
+        delay(200)
+        finalColorPlus = AlmostTransparent
+    }
+    BoxWithConstraints(
         modifier = Modifier
             .fillMaxWidth()
             .fillMaxHeight(0.3F)
@@ -85,17 +83,17 @@ fun BalanceBar() {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Image(
-                    painter = painterResource(id = R.drawable.empty),
+                    painter = painterResource(id = image),
                     contentDescription = "",
                     modifier = Modifier.size(64.dp)
                 )
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                        modifier = Modifier.align(Alignment.Start)
                     ) {
-                        Text("+", fontSize = 48.sp, color = SideTextColor, fontFamily = itimStyle)
-                        Text(getBalanceText(balance), fontSize = 48.sp, color = SideTextColor, fontFamily = itimStyle)
+                        Text("+", fontSize = 48.sp, color = animatedColorPlus, fontFamily = itimStyle, modifier = Modifier)
+                        Text(getBalanceText(balance), fontSize = 48.sp, color = SideTextColor, fontFamily = itimStyle, modifier = Modifier)
                         Spacer(Modifier.height(1.dp))
                     }
                     Text("Crypto Points", fontSize = medium_text_size, color = SideTextColor, fontFamily = itimStyle)
@@ -104,16 +102,15 @@ fun BalanceBar() {
             }
             Spacer(Modifier.height(12.dp))
         }
-        FallingCoins()
+        FallingCoins(coins,maxHeight.value,maxWidth.value, onRemove)
     }
 }
 
 @Composable
-fun FallingCoins() {
-    var coins by remember { mutableStateOf(listOf<Coin>()) }
+fun FallingCoins(coins: List<Coin?>,maxHeight: Float, maxWidth: Float,onRemove: (Int) -> Unit) {
     val scope = rememberCoroutineScope()
 
-    LaunchedEffect(Unit) {
+/*    LaunchedEffect(Unit) {
         while (true) {
             for(i in 0..MULTIPLYER_ENUM.MULTYPLIER_5x.value){
                 coins = coins + Coin(
@@ -123,59 +120,87 @@ fun FallingCoins() {
             }
             delay(1000)
         }
+    }*/
+    for(i in 0..<coins.size){
+        if(coins[i]!=null){
+            FallingCoin(
+                modifier = Modifier,
+                coin = coins[i]!!,
+                maxHeight = maxHeight,
+                maxWidth = maxWidth,
+                onRemove = { onRemove(i) }
+            )
+        }
     }
-
-    coins.forEach { coin ->
+/*    coins.forEach { coin ->
         FallingCoin(
             modifier = Modifier,
             coin = coin,
-            onRemove = { id -> coins = coins.filter { it.id != id } }
+            maxHeight = maxHeight,
+            maxWidth = maxWidth,
+            onRemove = { onRemove(coin.key) }
         )
-    }
+    }*/
 }
 
-val almostAlpha0 = 0.000001f
 
 @Composable
-fun FallingCoin(modifier: Modifier, coin: Coin, onRemove: (Long) -> Unit) {
-    val yOffsetRandom = (0..50).random().toFloat()
-    val yOffset = remember { Animatable(yOffsetRandom) }
-    val alpha = remember { Animatable(1f) }
+fun FallingCoin(modifier: Modifier, maxHeight: Float, maxWidth:Float, coin: Coin, onRemove: (Integer) -> Unit) {
+    val yOffset = remember { Animatable(coin.startY*maxHeight) }
+    val xOffset = remember { Animatable(coin.startX*maxWidth) }
+    val size = remember { Animatable(1f) }
+    val alpha = remember { Animatable(almostAlpha0) }
     val scope = rememberCoroutineScope()
 
-    LaunchedEffect(coin) {
+    LaunchedEffect(coin.id) {
         scope.launch {
             yOffset.animateTo(
-                targetValue = 200f+yOffsetRandom, // Adjust this value as needed for the falling distance
+                targetValue = coin.endY*maxHeight, // Adjust this value as needed for the falling distance
                 animationSpec = tween(durationMillis = 1000, easing = FastOutSlowInEasing)
             )
         }
         scope.launch {
-            Log.d("IdCheckUp",coin.x.toString() + " " + coin.id.toString())
+            xOffset.animateTo(
+                targetValue = coin.endX*maxWidth, // Adjust this value as needed for the falling distance
+                animationSpec = tween(durationMillis = 1000, easing = FastOutSlowInEasing)
+            )
+        }
+        scope.launch {
+            size.animateTo(
+                targetValue = coin.endSize, // Adjust this value as needed for the falling distance
+                animationSpec = tween(durationMillis = 1000, easing = FastOutSlowInEasing)
+            )
+        }
+        scope.launch {
+            alpha.animateTo(
+                targetValue = 1f,
+                animationSpec = tween(durationMillis = 1000, easing = FastOutSlowInEasing)
+            )
+            delay(300L)
             alpha.animateTo(
                 targetValue = almostAlpha0,
-                animationSpec = tween(durationMillis = 2000, easing = FastOutSlowInEasing)
+                animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing)
             )
+            Log.d("Worked","work + "+coin.id)
             onRemove(coin.id) // Remove the coin after the animation ends
         }
     }
-    SideEffect {
-        Log.d("UIDEBUG",(coin.x).dp.value.toString())
-    }
-    if (alpha.value > almostAlpha0) {
-        Image(
-            painter = rememberImagePainter(data = coin.image),
-            contentDescription = "",
-            modifier = modifier
-                .absoluteOffset(x = (coin.x).dp, y = yOffset.value.dp)
-                .size(32.dp)
-                .alpha(alpha.value)
-        )
-    }
+    Image(
+        painter = rememberAsyncImagePainter(model = R.drawable.anim_item),
+        contentDescription = "",
+        modifier = modifier
+            .absoluteOffset(x = xOffset.value.dp, y = yOffset.value.dp)
+            .size((32 * size.value).dp)
+            .alpha(alpha.value)
+    )
 }
 
+val almostAlpha0 = 0.000001f
 data class Coin(
-    val id: Long,
-    val x: Float,
-    val image: Int = R.drawable.anim_item // default coin image, replace with your coin image
+    var id: Integer,
+    var endSize: Float,
+    var startX: Float = (0..1).random().toFloat(),
+    var startY: Float = (0..1).random().toFloat(),
+    var endX: Float = (0..1).random().toFloat(),
+    var endY: Float = (0..1).random().toFloat(),
 )

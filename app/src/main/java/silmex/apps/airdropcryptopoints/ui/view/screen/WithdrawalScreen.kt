@@ -27,6 +27,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -48,6 +49,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.toUpperCase
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.MutableLiveData
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -69,12 +71,23 @@ import silmex.apps.airdropcryptopoints.ui.theme.itimStyle
 import silmex.apps.airdropcryptopoints.ui.view.composables.BalanceBar
 import silmex.apps.airdropcryptopoints.ui.view.composables.DashedLine
 import silmex.apps.airdropcryptopoints.ui.view.composables.InActiveBackground
+import silmex.apps.airdropcryptopoints.viewmodel.RefferralViewModel
+import silmex.apps.airdropcryptopoints.viewmodel.WithdrawalViewModel
 import java.util.Locale
 
 @Composable
-fun WithdrawalScreen(){
-    val partnerUrl = ""
+fun WithdrawalScreen(viewModel: WithdrawalViewModel){
+    val balance by viewModel.balance.observeAsState()
+    val isMining by viewModel.isMining.observeAsState()
+    val coins by viewModel.coins.observeAsState()
+    val transactionList = viewModel.transactionList
+    val transactionListtest by viewModel.transactionList.observeAsState()
+    val uriGooglePlay by viewModel.mainDataRepository.urlGooglePlay.observeAsState()
+    val progress by viewModel.progress.observeAsState()
 
+    LaunchedEffect(transactionListtest) {
+        Log.d("UITESTS",transactionListtest!!.size.toString())
+    }
 
     val isPressable by remember {
         mutableStateOf(true)
@@ -83,13 +96,18 @@ fun WithdrawalScreen(){
     var hasShownFirstWithdrawal = remember {
         mutableStateOf(false)
     }
-    val transactionList = listOf(Transaction("",114.32F,"","","","37ygjhkhtu8",0),Transaction("",114.32F,"","","","gjdp59dj49",1),Transaction("",114.32F,"","","","64y5gerhtu8",2))
+    var hasWorked: MutableState<Boolean> = remember {
+        mutableStateOf(false)
+    }
+    LaunchedEffect(Unit) {
+        hasWorked.value = false
+    }
     Column(
         Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp)
             .padding(top = 32.dp), verticalArrangement = Arrangement.spacedBy(24.dp)) {
-        BalanceBar()
+        BalanceBar(balance!!,progress!!, isMining!!,coins!!, viewModel::removeCoin)
         Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
 
             Text(
@@ -103,16 +121,19 @@ fun WithdrawalScreen(){
 
             InActiveBackground(isPressable,{
             MainScope().launch {
+                hasWorked.value = false
                 hasShownFirstWithdrawal.value = false
+                viewModel.withdrawalOnClick()
             }/*viewmodel.withdraw*/},null,"Withdraw")
         }
 
 
-        TransactionHistory(hasShownFirstWithdrawal = hasShownFirstWithdrawal, list = transactionList, {/*viewModel.showToast("Code copied!")*/})
+        TransactionHistory(hasShownFirstWithdrawal = hasShownFirstWithdrawal, transactionList, hasWorked,onClick = viewModel::copyCodeOnClick)
 
         val uriHandler = LocalUriHandler.current
         WithdrawalScreenEnd(){
-            uriHandler.openUri(partnerUrl!!)}
+            uriHandler.openUri(uriGooglePlay!!)
+        }
     }
 }
 
@@ -135,20 +156,25 @@ fun WithdrawalScreenEnd(onClick: () -> Unit){
                 .align(Alignment.CenterHorizontally)
         )
         Image(painter = painterResource(id = R.drawable.get_it_on_google_play_icon), contentDescription = "", contentScale = ContentScale.FillWidth, modifier = Modifier
-            .fillMaxWidth(animatedImageSize/2)
+            .fillMaxWidth(animatedImageSize / 2)
             .align(Alignment.CenterHorizontally)
-            .clickable(interactionSource = remember{ MutableInteractionSource() }, indication = null) {
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null
+            ) {
                 MainScope().launch {
                     imageSize = 0.6f
                     delay(300)
                     imageSize = 0.85f
+                    onClick()
                 }
             })
     }
 }
 
 @Composable
-fun TransactionHistory(hasShownFirstWithdrawal: MutableState<Boolean>, list: List<Transaction>?, onClick: ()->Unit){
+fun TransactionHistory(hasShownFirstWithdrawal: MutableState<Boolean>, transList: MutableLiveData<List<Transaction>?>, hasWorked:MutableState<Boolean>, onClick: (String)->Unit){
+    val list by transList.observeAsState(initial = listOf())
     fun getMoneyText(sum: Float):String{
         val formattedValue = String.format("%.2f", sum)
         return formattedValue.toString()+" USDT"
@@ -198,12 +224,13 @@ fun TransactionHistory(hasShownFirstWithdrawal: MutableState<Boolean>, list: Lis
         if(!list.isNullOrEmpty()){
             LazyColumn(modifier = Modifier.fillMaxHeight(0.4F)){
                 item{
-                    LongWithdrawal(hasShownFirstWithdrawal,list[0],0, list.size-1) { onClick() }
+                    LongWithdrawal(hasShownFirstWithdrawal,list!![0],0,  list!!.size-1,hasWorked) { onClick(it) }
                 }
-                if(list.size>1){
+                if(list!!.size>1){
+                    Log.d("UITESTS",list!!.size.toString())
                     for(trans in 1..<list!!.size){
                         item{
-                            LongWithdrawal(hasShownFirstWithdrawal,list[trans],trans, list.size-1) { onClick() }
+                            LongWithdrawal(hasShownFirstWithdrawal,list!![trans],trans, list!!.size-1,hasWorked) { onClick(it) }
                         }
                     }
                 }
@@ -230,8 +257,7 @@ fun TransactionHistory(hasShownFirstWithdrawal: MutableState<Boolean>, list: Lis
 }
 
 @Composable
-fun LongWithdrawal(hasShownFirstWithdrawal: MutableState<Boolean> = mutableStateOf(false), trans: Transaction, index: Int, size: Int, onClick: ()->Unit){
-
+fun LongWithdrawal(hasShownFirstWithdrawal: MutableState<Boolean> = mutableStateOf(false), trans: Transaction, index: Int, size: Int, hasWorked: MutableState<Boolean>, onClick: (String)->Unit){
     fun getMoneyText(sum: Float):String{
         val formattedValue = String.format("%.2f", sum)
         return formattedValue.toString()+" USDT"
@@ -240,16 +266,13 @@ fun LongWithdrawal(hasShownFirstWithdrawal: MutableState<Boolean> = mutableState
         Log.d("triggered","index "+ index + " size " + size)
         mutableStateOf(index!=0)
     }
-    var hasWorked: Boolean by remember {
-        mutableStateOf(false)
-    }
-    val colorList = listOf(NotUsedRed, InvalidOrange, UsedGreen)
-    var bgcolor = if (isTheLastOne) AlmostTransparent else AlmostTransparent
-    var bgcolor2 = if (isTheLastOne) colorList[trans.status] else AlmostTransparent
-    var bdcolor = if (isTheLastOne) AltBG else AlmostTransparent
-    var textcolor = if (isTheLastOne) WithdrawalTextColor else AlmostTransparent
-    var text2color = if (isTheLastOne) OffTextColor else AlmostTransparent
-    var alphaAnim = if (isTheLastOne) 1F else 0f
+    val colorList = listOf(NotUsedRed, UsedGreen,InvalidOrange)
+    var bgcolor = if (isTheLastOne||hasWorked.value) AlmostTransparent else AlmostTransparent
+    var bgcolor2 = if (isTheLastOne||hasWorked.value) colorList[trans.status] else AlmostTransparent
+    var bdcolor = if (isTheLastOne||hasWorked.value) AltBG else AlmostTransparent
+    var textcolor = if (isTheLastOne||hasWorked.value) WithdrawalTextColor else AlmostTransparent
+    var text2color = if (isTheLastOne||hasWorked.value) OffTextColor else AlmostTransparent
+    var alphaAnim = if (isTheLastOne||hasWorked.value) 1F else 0f
     val animDuration = 600
     val animatedColorBG by animateColorAsState(
         targetValue = bgcolor,
@@ -275,9 +298,6 @@ fun LongWithdrawal(hasShownFirstWithdrawal: MutableState<Boolean> = mutableState
         targetValue = alphaAnim,
         animationSpec = tween(durationMillis = animDuration)
     )
-    LaunchedEffect(Unit) {
-        hasWorked = false
-    }
     val clipboardManager: ClipboardManager = LocalClipboardManager.current
     val textList = listOf("Not Used","Used","Invalid")
     val configuration = LocalConfiguration.current
@@ -315,7 +335,8 @@ fun LongWithdrawal(hasShownFirstWithdrawal: MutableState<Boolean> = mutableState
             .fillMaxWidth()
             .padding(horizontal = 16.dp)
             .onGloballyPositioned {
-                if (index == 0 && !hasShownFirstWithdrawal.value) {
+                if (index == 0 && !hasShownFirstWithdrawal.value && !hasWorked.value) {
+                    hasWorked.value = true
                     hasShownFirstWithdrawal.value = true
                     MainScope().launch {
                         isTheLastOne = false
@@ -323,11 +344,11 @@ fun LongWithdrawal(hasShownFirstWithdrawal: MutableState<Boolean> = mutableState
                         isTheLastOne = true
                     }
                 }
-
             }
             .height(60.dp)) {
             Box(modifier = Modifier
-                .weight(1.2F).fillMaxHeight()){
+                .weight(1.2F)
+                .fillMaxHeight()){
 
                 Text(//usdt
                     text = getMoneyText(trans.value),
@@ -341,7 +362,12 @@ fun LongWithdrawal(hasShownFirstWithdrawal: MutableState<Boolean> = mutableState
 
             Row(//copyRow
                 modifier = Modifier
-                    .weight(1.5F).fillMaxHeight(), horizontalArrangement = Arrangement.Center
+                    .weight(1.5F)
+                    .fillMaxHeight()
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                    ) { onClick(trans.promocode) }, horizontalArrangement = Arrangement.Center
             ){
                 var shakeOffset by remember { mutableStateOf(0f) }
                 val animatedImageSize by animateFloatAsState(
@@ -371,7 +397,8 @@ fun LongWithdrawal(hasShownFirstWithdrawal: MutableState<Boolean> = mutableState
 
             Box(
                 modifier = Modifier
-                    .weight(1F).fillMaxHeight()){
+                    .weight(1F)
+                    .fillMaxHeight()){
 
                 Text(//status
                     text = textList[trans.status],
@@ -459,6 +486,6 @@ fun LongWithdrawal(hasShownFirstWithdrawal: MutableState<Boolean> = mutableState
 
         }
         if(index!=size)
-        DashedLine()
+            DashedLine()
     }
 }

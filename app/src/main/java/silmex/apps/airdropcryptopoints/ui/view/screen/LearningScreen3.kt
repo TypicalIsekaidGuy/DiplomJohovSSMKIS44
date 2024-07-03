@@ -2,7 +2,11 @@ package silmex.apps.airdropcryptopoints.ui.view.screen
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
@@ -24,14 +28,15 @@ import silmex.apps.airdropcryptopoints.ui.view.composables.MultiStyleText
 import silmex.apps.airdropcryptopoints.ui.view.composables.NavigateToButton
 
 @Composable
-fun LearningScreen3(navigateTo:()->Unit){
+fun LearningScreen3(navigateTo:()->Unit) {
 
-    Column(
+    Box(Modifier.fillMaxSize()) {
+        Column(
         Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp)
-            .padding(top = 64.dp), verticalArrangement = Arrangement.spacedBy(32.dp)
+            .padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(32.dp)
     ) {
+        Spacer(modifier = Modifier.fillMaxHeight(0.02f))
         ProgressIndicator(3)
         Column(
             Modifier
@@ -45,9 +50,22 @@ fun LearningScreen3(navigateTo:()->Unit){
                 textAlign = TextAlign.Start
             )
 
-            Image(painter = painterResource(id = R.drawable.withdraw_illustration), contentDescription = "", modifier = Modifier.align(
-                Alignment.CenterHorizontally).fillMaxWidth(), contentScale = ContentScale.FillWidth)
-            NavigateToButton("START",Modifier.fillMaxWidth().align(Alignment.CenterHorizontally),{navigateTo()})
+            Image(
+                painter = painterResource(id = R.drawable.withdraw_illustration),
+                contentDescription = "",
+                modifier = Modifier.align(
+                    Alignment.CenterHorizontally
+                ).fillMaxWidth(),
+                contentScale = ContentScale.FillWidth
+            )
         }
     }
+
+    Column(Modifier.align(Alignment.BottomCenter)) {
+        Box(Modifier.fillMaxWidth().padding(horizontal = 16.dp)){
+            NavigateToButton("Start", Modifier, { navigateTo() })
+        }
+        Spacer(modifier = Modifier.fillMaxHeight(0.1f))
+    }
+}
 }

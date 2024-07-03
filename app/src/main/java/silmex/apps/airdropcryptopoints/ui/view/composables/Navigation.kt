@@ -10,6 +10,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -22,9 +25,12 @@ import silmex.apps.airdropcryptopoints.ui.view.screen.LearningScreen3
 import silmex.apps.airdropcryptopoints.ui.view.screen.RefferalsScreen
 import silmex.apps.airdropcryptopoints.ui.view.screen.SplashScreen
 import silmex.apps.airdropcryptopoints.ui.view.screen.WithdrawalScreen
+import silmex.apps.airdropcryptopoints.viewmodel.HomeViewModel
+import silmex.apps.airdropcryptopoints.viewmodel.RefferralViewModel
+import silmex.apps.airdropcryptopoints.viewmodel.WithdrawalViewModel
 
 @Composable
-fun Navigation(/*viewModelMap: HashMap<Screen, ViewModel>*/) {
+fun Navigation() {
     val navController = rememberNavController()
     var selected by remember{ mutableStateOf (Screen.HomeScreen) }
     Box(
@@ -35,6 +41,8 @@ fun Navigation(/*viewModelMap: HashMap<Screen, ViewModel>*/) {
             navController = navController,
             startDestination = Screen.HomeScreen.route
         ) {
+
+
             composable(route = Screen.SplashScreen.route){
                 SplashScreen {
                     selected = Screen.LearningScreen1
@@ -60,37 +68,13 @@ fun Navigation(/*viewModelMap: HashMap<Screen, ViewModel>*/) {
                 }
             }
             composable(route = Screen.HomeScreen.route) {
-                HomeScreen(/*
-                    navController,
-                    viewModelMap[Screen.MainScreen]!! as MainViewModel,
-                    {
-                        if (selected.value != Screen.MainScreen.route){
-                            selected.value = Screen.MainScreen.route
-                        }
-                    }*/
-                )
+                HomeScreen(hiltViewModel<HomeViewModel>())
             }
             composable(route = Screen.WithdrawalScreen.route) {
-                WithdrawalScreen(/*
-                    navController,
-                    viewModelMap[Screen.MainScreen]!! as MainViewModel,
-                    {
-                        if (selected.value != Screen.MainScreen.route){
-                            selected.value = Screen.MainScreen.route
-                        }
-                    }*/
-                )
+                WithdrawalScreen(hiltViewModel<WithdrawalViewModel>())
             }
             composable(route = Screen.RefferalsScreen.route) {
-                RefferalsScreen(/*
-                    navController,
-                    viewModelMap[Screen.MainScreen]!! as MainViewModel,
-                    {
-                        if (selected.value != Screen.MainScreen.route){
-                            selected.value = Screen.MainScreen.route
-                        }
-                    }*/
-                )
+                RefferalsScreen(hiltViewModel<RefferralViewModel>())
             }
         }
         if(selected== Screen.HomeScreen||selected== Screen.RefferalsScreen||selected== Screen.WithdrawalScreen){
