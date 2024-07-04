@@ -85,6 +85,9 @@ public class MainDataRepository {
             mainTimer = null;
         }
     }
+    public void claimBalance(){
+        currentChosenMultipliyer.setValue(MULTIPLYER_ENUM.MULTYPLIER_1x);
+    }
     public void addTransaction(){
         List<Transaction> transactions = transactionList.getValue();
         transactions.add(new Transaction(ConvertUtils.stringToDate("2024-04-1011:23:34"),114.32F,"","","","231ssывыфв",0));

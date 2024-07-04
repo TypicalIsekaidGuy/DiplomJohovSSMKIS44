@@ -143,6 +143,7 @@ public class RefferralViewModel extends ViewModel {
     public void removeCoin(Integer id) {
         List<Coin> currentCoins = coins.getValue();
         if (currentCoins != null) {
+            Log.d("VIEWMODElend",id.toString());
             currentCoins.set(id,null);
             coins.setValue(currentCoins);
         }

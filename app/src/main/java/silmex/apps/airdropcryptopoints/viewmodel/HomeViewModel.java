@@ -114,16 +114,20 @@ public class HomeViewModel extends ViewModel {
         timerText.setValue(defaultTimerText);
         progress.setValue(0f);
     }
+
     public void updateProgress(Long estimatedTime){
         progress.setValue( ((float)estimatedTime/fullTimerDuration));
     }
+
     public void removeCoin(Integer id) {
         List<Coin> currentCoins = coins.getValue();
         if (currentCoins != null) {
+            Log.d("VIEWMODElend",id.toString());
             currentCoins.set(id,null);
             coins.setValue(currentCoins);
         }
     }
+
     private void addCoin(Integer count){
         if(coins.getValue().size()==500){
             for(int i = 0; i<count; i++){
@@ -131,6 +135,7 @@ public class HomeViewModel extends ViewModel {
                 List<Coin> coinList = coins.getValue();
                 while(coins.getValue().get(499) ==null){
                     if(coins.getValue().get(j)==null){
+                        Log.d("VIEWMODEl",j.toString());
                         Random random = new Random();
                         coinList.set(j,new Coin(j,random.nextFloat()+ 0.5f,random.nextFloat()/1.5f,random.nextFloat()/3,random.nextFloat()/3+ 0.5f,random.nextFloat()/3 + 0.5f));
                         coins.setValue(coinList);
@@ -150,6 +155,7 @@ public class HomeViewModel extends ViewModel {
     }
     public void claimClick(){
         mainDataRepository.setTimer();
+        mainDataRepository.claimBalance();
     }
     public void upgradeWheel(){
 

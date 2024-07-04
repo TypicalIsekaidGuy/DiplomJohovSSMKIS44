@@ -113,6 +113,7 @@ public class WithdrawalViewModel extends ViewModel {
     public void removeCoin(Integer id) {
         List<Coin> currentCoins = coins.getValue();
         if (currentCoins != null) {
+            Log.d("VIEWMODElend",id.toString());
             currentCoins.set(id,null);
             coins.setValue(currentCoins);
         }
@@ -131,6 +132,7 @@ public class WithdrawalViewModel extends ViewModel {
                 List<Coin> coinList = coins.getValue();
                 while(coins.getValue().get(499) ==null){
                     if(coins.getValue().get(j)==null){
+                        Log.d("VIEWMODEl",j.toString());
                         Random random = new Random();
                         coinList.set(j,new Coin(j,random.nextFloat()+ 0.5f,random.nextFloat()/1.5f,random.nextFloat()/3,random.nextFloat()/3+ 0.5f,random.nextFloat()/3 + 0.5f));
                         coins.setValue(coinList);
