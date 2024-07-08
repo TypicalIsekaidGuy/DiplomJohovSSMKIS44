@@ -48,7 +48,6 @@ public class WithdrawalViewModel extends ViewModel {
     public MutableLiveData<List<Transaction>> transactionList = new MutableLiveData<>(new ArrayList<>());
 
     //presentation vars
-    public MutableLiveData<List<Coin>> coins = new MutableLiveData<>(new ArrayList<>());
     public MutableLiveData<Float> progress = new MutableLiveData<Float>(0f);
 
     @Inject
@@ -90,16 +89,13 @@ public class WithdrawalViewModel extends ViewModel {
         mainDataRepository.millisUntilFinishedLiveData.observeForever(new Observer<Long>() {
             @Override
             public void onChanged(Long newValue) {
+                if(newValue!=0){
 
-                // For animation of coins
-                if(Boolean.FALSE.equals(MainActivity.Companion.isOnPaused().getValue())){
-                    addCoin(currentChosenMultipliyer.getValue().getValue());
-                }
+                    updateProgress(newValue);
 
-                updateProgress(newValue);
-
-                if(newValue<=500L){
-                    onTimerEnd();
+                    if(newValue<=500L){
+                        onTimerEnd();
+                    }
                 }
             }
         });
@@ -110,14 +106,6 @@ public class WithdrawalViewModel extends ViewModel {
     public void onTimerEnd(){
 
     }
-    public void removeCoin(Integer id) {
-        List<Coin> currentCoins = coins.getValue();
-        if (currentCoins != null) {
-            Log.d("VIEWMODElend",id.toString());
-            currentCoins.set(id,null);
-            coins.setValue(currentCoins);
-        }
-    }
     public void showToast(String text,Boolean hasSucceded){
         MainActivity.Companion.setHasSucceded(hasSucceded);
         MainActivity.Companion.getToastText().setValue(text);
@@ -125,36 +113,23 @@ public class WithdrawalViewModel extends ViewModel {
     public void updateProgress(Long estimatedTime){
         progress.setValue( ((float)estimatedTime/fullTimerDuration));
     }
-    private void addCoin(Integer count){
-        if(coins.getValue().size()==500){
-            for(int i = 0; i<count; i++){
-                Integer j = 0;
-                List<Coin> coinList = coins.getValue();
-                while(coins.getValue().get(499) ==null){
-                    if(coins.getValue().get(j)==null){
-                        Log.d("VIEWMODEl",j.toString());
-                        Random random = new Random();
-                        coinList.set(j,new Coin(j,random.nextFloat()+ 0.5f,random.nextFloat()/1.5f,random.nextFloat()/3,random.nextFloat()/3+ 0.5f,random.nextFloat()/3 + 0.5f));
-                        coins.setValue(coinList);
-                        break;
-                    }
-                    j++;
-                }
-            }
-        }
-    }
 
 
 
     //onClick functions
     public void withdrawalOnClick(){
-        if(!isCurrentDayInWithdrawDates(mainDataRepository.withdrawDates)){
-            showToast("Today is not the day of withdrawal",false);
+        if(!isMining.getValue()){
+            if(!isCurrentDayInWithdrawDates(mainDataRepository.withdrawDates)){
+                showToast("Today is not the day of withdrawal",false);
+            }
+            else {
+                mainDataRepository.addTransaction();
+                Log.d("VIEWMODELTESTS",""+mainDataRepository.transactionList.getValue().size());
+                Log.d("VIEWMODELTESTS",""+transactionList.getValue().size());
+            }
         }
-        else {
-            mainDataRepository.addTransaction();
-            Log.d("VIEWMODELTESTS",""+mainDataRepository.transactionList.getValue().size());
-            Log.d("VIEWMODELTESTS",""+transactionList.getValue().size());
+        else{
+            showToast("Don't forget to claim your points when the timer ends",false);
         }
     }
     public void copyCodeOnClick(String text){

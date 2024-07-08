@@ -101,7 +101,9 @@ fun LearningScreen1(navigateTo:()->Unit) {
                     MultiStyleText(modifier = Modifier,colors = listOf(MainTextColor, SideTextColor, MainTextColor), fontSize = average_text_size,textAlign = TextAlign.Start, "Use ", """"Upgrade""""," to get much more rewards")
                 }
             }
-            Image(painterResource(id = R.drawable.present_illustration),"")
+            Image(painterResource(id = R.drawable.present_illustration),"", modifier = Modifier.align(
+                Alignment.CenterHorizontally
+            ))
         }
         Column (Modifier.align(Alignment.BottomCenter)){
             Box(Modifier.fillMaxWidth().padding(horizontal = 16.dp)){

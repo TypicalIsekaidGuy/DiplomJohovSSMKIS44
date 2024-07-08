@@ -47,7 +47,7 @@ fun LearningScreen2(navigateTo:()->Unit){
                     .fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(70.dp)
             ) {
                 Text(
-                    text = "Invite friends and get 10 000 Crypto Points",
+                    text = "Invite friends and get \n 10 000 Crypto Points",
                     color = MainTextColor,
                     fontFamily = itimStyle,
                     fontSize = big_text_size,

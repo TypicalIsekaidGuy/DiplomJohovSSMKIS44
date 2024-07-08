@@ -1,8 +1,17 @@
 package silmex.apps.airdropcryptopoints.ui.view.composables
 
 import android.util.Log
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.*
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
+import androidx.compose.animation.with
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -14,6 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
@@ -27,6 +37,7 @@ import silmex.apps.airdropcryptopoints.ui.theme.FarmingProgressBG
 import silmex.apps.airdropcryptopoints.ui.theme.MainBG
 import silmex.apps.airdropcryptopoints.ui.theme.MainTextColor
 import silmex.apps.airdropcryptopoints.ui.theme.SideTextColor
+import silmex.apps.airdropcryptopoints.ui.theme.average_text_size
 import silmex.apps.airdropcryptopoints.ui.theme.big_text_size
 import silmex.apps.airdropcryptopoints.ui.theme.itimStyle
 import silmex.apps.airdropcryptopoints.ui.theme.medium_text_size
@@ -36,8 +47,15 @@ import silmex.apps.airdropcryptopoints.utils.StringUtils.getBalanceText
 @Composable
 fun BalanceBar(balance: Float,progress: Float, isFarming: Boolean, coins: List<Coin?>, onRemove: (Int) -> Unit) {
     var progress = 1-progress
+    var alphaText by remember { mutableStateOf(0f) }
+
+    val animatedAlphaText by animateFloatAsState(
+        targetValue = alphaText,
+        animationSpec = tween(durationMillis = 1000, easing = FastOutSlowInEasing)
+    )
     var image by remember { mutableStateOf(R.drawable.empty) }
     LaunchedEffect(progress) {
+
         if(progress!=1f){
 
             when(progress){
@@ -51,6 +69,9 @@ fun BalanceBar(balance: Float,progress: Float, isFarming: Boolean, coins: List<C
         else{
             image = R.drawable.empty
         }
+        alphaText = if(alphaText== almostAlpha0){
+            1f
+        } else almostAlpha0
     }
     var finalColorPlus by remember { mutableStateOf(AlmostTransparent) }
     val animatedColorPlus by animateColorAsState(
@@ -58,9 +79,11 @@ fun BalanceBar(balance: Float,progress: Float, isFarming: Boolean, coins: List<C
         animationSpec = tween(durationMillis = 400)
     )
     LaunchedEffect(balance) {
-        finalColorPlus = SideTextColor
-        delay(200)
-        finalColorPlus = AlmostTransparent
+        if(balance.toInt() !=0){
+            finalColorPlus = SideTextColor
+            delay(300)
+            finalColorPlus = AlmostTransparent
+        }
     }
     BoxWithConstraints(
         modifier = Modifier
@@ -88,24 +111,37 @@ fun BalanceBar(balance: Float,progress: Float, isFarming: Boolean, coins: List<C
                     modifier = Modifier.size(64.dp)
                 )
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier.align(Alignment.Start)
-                    ) {
-                        Text("+", fontSize = 48.sp, color = animatedColorPlus, fontFamily = itimStyle, modifier = Modifier)
-                        Text(getBalanceText(balance), fontSize = 48.sp, color = SideTextColor, fontFamily = itimStyle, modifier = Modifier)
-                        Spacer(Modifier.height(1.dp))
-                    }
+                    Spacer(modifier = Modifier.height(32.dp))
                     Text("Crypto Points", fontSize = medium_text_size, color = SideTextColor, fontFamily = itimStyle)
                 }
                 Spacer(Modifier.width(48.dp))
             }
             Spacer(Modifier.height(12.dp))
         }
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.align(Alignment.Center)
+        ) {
+            Text("+", fontSize = 48.sp, color = animatedColorPlus, fontFamily = itimStyle, modifier = Modifier)
+            Text(getBalanceText(balance), fontSize = 48.sp, color = SideTextColor, fontFamily = itimStyle, modifier = Modifier)
+            Spacer(Modifier.height(1.dp))
+        }
         FallingCoins(coins,maxHeight.value,maxWidth.value, onRemove)
+        Text("Don't forget to claim your points when the timer ends", textAlign = TextAlign.Center, fontSize = average_text_size, color = FarmingProgressBG, fontFamily = itimStyle, maxLines = 1, modifier = Modifier
+            .align(
+                Alignment.BottomCenter
+            )
+            .alpha(animatedAlphaText)
+            .padding(bottom = 8.dp)
+            .fillMaxWidth())
     }
 }
 
+fun formatTime(time: Int): String {
+    val minutes = time / 60
+    val seconds = time % 60
+    return String.format("%02d:%02d", minutes, seconds)
+}
 @Composable
 fun FallingCoins(coins: List<Coin?>,maxHeight: Float, maxWidth: Float,onRemove: (Int) -> Unit) {
     val scope = rememberCoroutineScope()
@@ -156,30 +192,30 @@ fun FallingCoin(modifier: Modifier, maxHeight: Float, maxWidth:Float, coin: Coin
         scope.launch {
             yOffset.animateTo(
                 targetValue = coin.endY*maxHeight, // Adjust this value as needed for the falling distance
-                animationSpec = tween(durationMillis = 1000, easing = FastOutSlowInEasing)
+                animationSpec = tween(durationMillis = 1000, easing = FastOutLinearInEasing)
             )
         }
         scope.launch {
             xOffset.animateTo(
                 targetValue = coin.endX*maxWidth, // Adjust this value as needed for the falling distance
-                animationSpec = tween(durationMillis = 1000, easing = FastOutSlowInEasing)
+                animationSpec = tween(durationMillis = 1000, easing = FastOutLinearInEasing)
             )
         }
         scope.launch {
             size.animateTo(
                 targetValue = coin.endSize, // Adjust this value as needed for the falling distance
-                animationSpec = tween(durationMillis = 1000, easing = FastOutSlowInEasing)
+                animationSpec = tween(durationMillis = 1000, easing = FastOutLinearInEasing)
             )
         }
         scope.launch {
             alpha.animateTo(
                 targetValue = 1f,
-                animationSpec = tween(durationMillis = 1000, easing = FastOutSlowInEasing)
+                animationSpec = tween(durationMillis = 500, easing = FastOutLinearInEasing)
             )
-            delay(300L)
+            delay(200)
             alpha.animateTo(
                 targetValue = almostAlpha0,
-                animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing)
+                animationSpec = tween(durationMillis = 300, easing = FastOutLinearInEasing)
             )
             Log.d("Worked","work + "+coin.id)
             onRemove(coin.id) // Remove the coin after the animation ends
@@ -196,6 +232,7 @@ fun FallingCoin(modifier: Modifier, maxHeight: Float, maxWidth:Float, coin: Coin
 }
 
 val almostAlpha0 = 0.000001f
+
 data class Coin(
     var id: Integer,
     var endSize: Float,

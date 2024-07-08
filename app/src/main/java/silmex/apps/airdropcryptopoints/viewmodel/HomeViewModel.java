@@ -16,6 +16,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.Random;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import javax.inject.Inject;
@@ -38,17 +43,14 @@ public class HomeViewModel extends ViewModel {
     public MutableLiveData<Boolean> isMining = new MutableLiveData<>(false);
 
     //presentation vars
-    public String defaultTimerText = "00:00:00";
-    public MutableLiveData<String> timerText = new MutableLiveData<String>(defaultTimerText);
+    public MutableLiveData<Long> leftTime = new MutableLiveData<Long>(0L);
     public MutableLiveData<Float> progress = new MutableLiveData<Float>(0f);
-    public MutableLiveData<List<Coin>> coins = new MutableLiveData<>(new ArrayList<>());
 
     @Inject
     HomeViewModel(@ApplicationContext Context context,MainDataRepository mainDataRepository){
         this.mainDataRepository = mainDataRepository;
         this.context = context;
         setUpObservers();
-        setUpPresentationVars();
     }
     private void setUpObservers(){
         mainDataRepository.currentChosenMultipliyer.observeForever(new Observer<MULTIPLYER_ENUM>() {
@@ -70,81 +72,33 @@ public class HomeViewModel extends ViewModel {
             public void onChanged(Boolean newValue) {
 
                 isMining.postValue(newValue);
-                if(!newValue){
-                    timerText.setValue(defaultTimerText);
-                }
             }
         });
 
         mainDataRepository.millisUntilFinishedLiveData.observeForever(new Observer<Long>() {
             @Override
             public void onChanged(Long newValue) {
+                if(newValue!=0) {
 
+                    leftTime.setValue(newValue);
 
+                    updateProgress(newValue);
 
-                // Used for formatting digit to be in 2 digits only
-                NumberFormat f = new DecimalFormat("00");
-                long hour = (newValue / 3600000) % 24;
-                long min = (newValue / 60000) % 60;
-                long sec = (newValue / 1000) % 60;
-                timerText.setValue(f.format(hour) + ":" + f.format(min) + ":" + f.format(sec));
-
-
-                // For animation of coins
-                if(Boolean.FALSE.equals(MainActivity.Companion.isOnPaused().getValue())){
-                    addCoin(currentChosenMultipliyer.getValue().getValue());
-                }
-
-                updateProgress(newValue);
-
-                if(newValue<=500L){
-                    onTimerEnd();
+                    if (newValue <= 500L) {
+                        onTimerEnd();
+                    }
                 }
             }
         });
     }
-    private void setUpPresentationVars(){
-        for(int i = 0; i<500; i++){
-            coins.getValue().add(null);
-        }
-    }
 
     //presentation functions
     public void onTimerEnd(){
-        timerText.setValue(defaultTimerText);
         progress.setValue(0f);
     }
 
     public void updateProgress(Long estimatedTime){
         progress.setValue( ((float)estimatedTime/fullTimerDuration));
-    }
-
-    public void removeCoin(Integer id) {
-        List<Coin> currentCoins = coins.getValue();
-        if (currentCoins != null) {
-            Log.d("VIEWMODElend",id.toString());
-            currentCoins.set(id,null);
-            coins.setValue(currentCoins);
-        }
-    }
-
-    private void addCoin(Integer count){
-        if(coins.getValue().size()==500){
-            for(int i = 0; i<count; i++){
-                Integer j = 0;
-                List<Coin> coinList = coins.getValue();
-                while(coins.getValue().get(499) ==null){
-                    if(coins.getValue().get(j)==null){
-                        Log.d("VIEWMODEl",j.toString());
-                        Random random = new Random();
-                        coinList.set(j,new Coin(j,random.nextFloat()+ 0.5f,random.nextFloat()/1.5f,random.nextFloat()/3,random.nextFloat()/3+ 0.5f,random.nextFloat()/3 + 0.5f));
-                        coins.setValue(coinList);
-                        break;
-                    }
-                    j++;
-                }
-            }
-        }
     }
 
 

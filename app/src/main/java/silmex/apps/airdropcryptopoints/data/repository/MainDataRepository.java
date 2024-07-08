@@ -77,9 +77,11 @@ public class MainDataRepository {
         }
     }
     public void turnOffTimer(){
-        if(mainTimer!=null){
+        currentChosenMultipliyer.setValue(MULTIPLYER_ENUM.MULTYPLIER_1x);
 
-            isActive.setValue(false);
+        isActive.setValue(false);
+
+        if(mainTimer!=null){
 
             mainTimer.cancel();
             mainTimer = null;

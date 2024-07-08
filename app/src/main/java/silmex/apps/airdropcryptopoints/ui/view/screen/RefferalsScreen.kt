@@ -32,10 +32,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.ClipboardManager
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
@@ -59,13 +62,14 @@ import silmex.apps.airdropcryptopoints.ui.theme.big_text_size
 import silmex.apps.airdropcryptopoints.ui.theme.itimStyle
 import silmex.apps.airdropcryptopoints.ui.view.composables.BalanceBar
 import silmex.apps.airdropcryptopoints.ui.view.composables.*
+import silmex.apps.airdropcryptopoints.viewmodel.MainViewModel
 import silmex.apps.airdropcryptopoints.viewmodel.RefferralViewModel
 
 @Composable
-fun RefferalsScreen(viewModel: RefferralViewModel){
+fun RefferalsScreen(viewModel: RefferralViewModel,mainViewModel: MainViewModel){
     val balance by viewModel.balance.observeAsState()
     val isMining by viewModel.isMining.observeAsState()
-    val coins by viewModel.coins.observeAsState()
+    val coins by mainViewModel.coins.observeAsState()
     val code = viewModel.mainDataRepository.referralCode
     val textValue = viewModel.textValue
     val progress by viewModel.progress.observeAsState()
@@ -76,7 +80,7 @@ fun RefferalsScreen(viewModel: RefferralViewModel){
             .fillMaxWidth()
             .padding(horizontal = 16.dp)
             .padding(top = 32.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        BalanceBar(balance!!,progress!!, isMining!!,coins!!, viewModel::removeCoin)
+        BalanceBar(balance!!,progress!!, isMining!!,coins!!, mainViewModel::removeCoin)
         InviteRefferalTextBlock()
         CopyCodeBlock(code,{
                            viewModel.shareCodeOnClick()
@@ -118,18 +122,18 @@ fun CopyCodeBlock(code:Int,onClick1:()->Unit,onClick2: () -> Unit){
             .padding(horizontal = 12.dp)
             .fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween){
             Column(horizontalAlignment = Alignment.Start) {
-                Text("Your referral promo code", fontSize = average_text_size, color = WhiteText, fontFamily = itimStyle, textAlign = TextAlign.Start)
-                Text(code.toString(), fontSize = big_text_size, color = WhiteText, fontFamily = itimStyle, textAlign = TextAlign.Start)
+                Text("Your referral promo code", fontSize = 12.sp, color = WhiteText, fontFamily = itimStyle, textAlign = TextAlign.Start, modifier = Modifier.padding(top = 4.dp))
+                Text(code.toString(), fontSize = 30.sp, color = WhiteText, fontFamily = itimStyle, textAlign = TextAlign.Start)
 
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.fillMaxHeight()){
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxHeight()){
                 Box(
                     Modifier
-                        .size(64.dp)
+                        .size(60.dp)
                         .fillMaxHeight()
                         .padding(vertical = 6.dp)){
                     Image(painter = painterResource(id = R.drawable.share_button), contentDescription = "",modifier = Modifier
-                        .size((64 - animatedPaddingValues).dp)
+                        .size((60 - animatedPaddingValues).dp)
                         .align(Alignment.Center)
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() },
@@ -146,11 +150,11 @@ fun CopyCodeBlock(code:Int,onClick1:()->Unit,onClick2: () -> Unit){
                 }
                 Box(
                     Modifier
-                        .size(64.dp)
+                        .size(60.dp)
                         .fillMaxHeight()
                         .padding(vertical = 6.dp)){
                     Image(painter = painterResource(id = R.drawable.copy_button), contentDescription = "",modifier = Modifier
-                        .size((64 - animatedPaddingValues2).dp)
+                        .size((60 - animatedPaddingValues2).dp)
                         .align(Alignment.Center)
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() },
@@ -193,10 +197,18 @@ fun InputRefferalBlock(limitOfCode: Int,textValue: MutableLiveData<String>, onCl
         var isOverCount by remember{
             mutableStateOf(textValue.value!!.count() <= limitOfCode)
         }
-        var isTextEmpty by remember{
-            mutableStateOf(textValue.value!!.isEmpty())
+        var isTextEmpty by remember {
+            mutableStateOf(textValueState.value.isEmpty())
         }
-        Box(modifier = Modifier.fillMaxWidth(0.8f)){
+
+        LaunchedEffect(textValueState.value.isEmpty()) {
+            if(textValueState.value.isNullOrEmpty()){
+                isTextEmpty = true
+            }
+        }
+        val focusRequester = remember { FocusRequester() }
+        val focusManager = LocalFocusManager.current
+        Box(modifier = Modifier.fillMaxWidth(0.7f)){
 
             BasicTextField(
                 value = textValueState.value,
@@ -208,6 +220,8 @@ fun InputRefferalBlock(limitOfCode: Int,textValue: MutableLiveData<String>, onCl
                 },
                 modifier = Modifier
                     .fillMaxWidth()
+                    .focusRequester(focusRequester)
+                    .padding(start = 4.dp, end = 4.dp)
                     .background(
                         Color.Transparent
                     ),
@@ -250,6 +264,7 @@ fun InputRefferalBlock(limitOfCode: Int,textValue: MutableLiveData<String>, onCl
                         paddingValues = 8f
                         delay(300)
                         paddingValues = 0f
+                        focusManager.clearFocus()
                         onClick()
                     }
                 })

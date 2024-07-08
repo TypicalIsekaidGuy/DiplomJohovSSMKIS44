@@ -34,6 +34,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.core.content.res.ResourcesCompat
+import androidx.lifecycle.MutableLiveData
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -42,38 +43,41 @@ import silmex.apps.airdropcryptopoints.data.model.MULTIPLYER_ENUM
 import silmex.apps.airdropcryptopoints.ui.theme.AltBG
 import silmex.apps.airdropcryptopoints.ui.theme.MainBG
 import silmex.apps.airdropcryptopoints.ui.theme.MainTextColor
+import silmex.apps.airdropcryptopoints.ui.theme.OffBGColor
 import silmex.apps.airdropcryptopoints.ui.theme.SideTextColor
 import silmex.apps.airdropcryptopoints.ui.theme.WhiteText
 import silmex.apps.airdropcryptopoints.ui.theme.medium_text_size
 import silmex.apps.airdropcryptopoints.ui.view.composables.BalanceBar
 import silmex.apps.airdropcryptopoints.ui.view.composables.ButtonBackground
 import silmex.apps.airdropcryptopoints.viewmodel.HomeViewModel
+import silmex.apps.airdropcryptopoints.viewmodel.MainViewModel
 
 @Composable
-fun HomeScreen(viewModel: HomeViewModel){
+fun HomeScreen(viewModel: HomeViewModel,mainViewModel: MainViewModel){
     val currentBoost = viewModel.currentChosenMultipliyer.observeAsState()
     val balance by viewModel.balance.observeAsState()
     val isMining by viewModel.isMining.observeAsState()
-    val timerText by viewModel.timerText.observeAsState()
+    val isMiningLD = viewModel.isMining
+    val leftTime by viewModel.leftTime.observeAsState()
     val progress by viewModel.progress.observeAsState()
-    val coins by viewModel.coins.observeAsState()
+    val coins by mainViewModel.coins.observeAsState()
 
     Column(
         Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp)
             .padding(top = 32.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        BalanceBar(balance!!,progress!!, isMining!!,coins!!, viewModel::removeCoin)
-        UpgradeWheel(isMining!!, currentBoost) { viewModel.upgradeWheelClick() }
+        BalanceBar(balance!!,progress!!, isMining!!,coins!!, mainViewModel::removeCoin)
+        UpgradeWheel(isMiningLD, currentBoost) { viewModel.upgradeWheelClick() }
         ClaimButton(currentBoost!!.value!!.value,balance!!,
-            progress!!,timerText!!,isMining!!,!isMining!!, {
+            progress!!,leftTime!!,isMining!!,!isMining!!,!isMining!!, {
             viewModel.claimClick()
         })
     }
 }
 
 @Composable
-fun UpgradeWheel(isActive: Boolean, currentBoost: State<MULTIPLYER_ENUM?>, upgradeWheelClick: ()->Unit) {
+fun UpgradeWheel(isActive: MutableLiveData<Boolean>, currentBoost: State<MULTIPLYER_ENUM?>, upgradeWheelClick: ()->Unit) {
 
 
 
@@ -94,52 +98,58 @@ fun UpgradeWheel(isActive: Boolean, currentBoost: State<MULTIPLYER_ENUM?>, upgra
                     .fillMaxWidth()
                     .height(maxWidth)) {
 
-                OuterCircle(currentBoost)
+                OuterCircle(currentBoost, isActive.value!!)
 
             }
         }
         LaunchedEffect(currentBoost.value) {
-            if(currentBoost.value!=MULTIPLYER_ENUM.MULTYPLIER_1x){
+            if(isActive.value!!){
+                if(currentBoost.value!=MULTIPLYER_ENUM.MULTYPLIER_1x){
 
-                while(true){
-                    paddingValues1 = 4f
-                    delay(600)
-                    paddingValues1 = 0f
-                    delay(600)
+                    while(true){
+                        paddingValues1 = 4f
+                        delay(600)
+                        paddingValues1 = 0f
+                        delay(600)
+                    }
                 }
-            }
-            else{
-                while(true){
-                    paddingValues1 = 16f
-                    delay(600)
-                    paddingValues1 = 0f
-                    delay(600)
+                else if(currentBoost.value==MULTIPLYER_ENUM.MULTYPLIER_55x){
+
+                }
+                else {
+                    while(true){
+                        paddingValues1 = 16f
+                        delay(600)
+                        paddingValues1 = 0f
+                        delay(600)
+                    }
                 }
             }
         }
+        val clickable = if(isActive.value!!) Modifier
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+            ) {
+
+                MainScope().launch {
+                    paddingValues1 = 12f
+                    delay(300)
+                    paddingValues1 = 0f
+                    upgradeWheelClick()
+                }
+            } else   Modifier
+
         Box(
             Modifier
                 .size(120.dp)
                 .align(Alignment.Center)) {
             Image(
-                painter = painterResource(id = if(currentBoost.value!=MULTIPLYER_ENUM.MULTYPLIER_1x) R.drawable.upgrade_center_active else R.drawable.upgrade_center_unactive),
+                painter = painterResource(id = if(isActive.value!!) R.drawable.upgrade_center_active else R.drawable.upgrade_center_unactive),
                 contentDescription = null,
-                modifier = Modifier
-                    .padding(animatedPaddingValues1.dp)
+                modifier = clickable
+                    .padding(if (currentBoost.value!=MULTIPLYER_ENUM.MULTYPLIER_55x) animatedPaddingValues1.dp else 0.dp)
                     .align(Alignment.Center)
-
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null,
-                    ) {
-
-                        MainScope().launch {
-                            paddingValues1 = 12f
-                            delay(300)
-                            paddingValues1 = 0f
-                            upgradeWheelClick()
-                        }
-                    }
             )
         }
     }
@@ -147,7 +157,7 @@ fun UpgradeWheel(isActive: Boolean, currentBoost: State<MULTIPLYER_ENUM?>, upgra
 
 
 @Composable
-fun OuterCircle(enumValue: State<MULTIPLYER_ENUM?>,) {
+fun OuterCircle(enumValue: State<MULTIPLYER_ENUM?>,isActive: Boolean) {
     val segments = listOf(
         MULTIPLYER_ENUM.MULTYPLIER_1x.value,
         MULTIPLYER_ENUM.MULTYPLIER_2x.value,
@@ -160,6 +170,10 @@ fun OuterCircle(enumValue: State<MULTIPLYER_ENUM?>,) {
         MULTIPLYER_ENUM.MULTYPLIER_55x.value,
     )
     val context = LocalContext.current
+    var color = if (isActive||enumValue.value!=MULTIPLYER_ENUM.MULTYPLIER_1x) SideTextColor else OffBGColor
+    LaunchedEffect (isActive){
+        Log.d("workd",""+isActive)
+    }
     Box(modifier = Modifier.fillMaxSize()) {
         Canvas(modifier = Modifier.fillMaxSize()) {
             val canvasWidth = size.width
@@ -182,7 +196,7 @@ fun OuterCircle(enumValue: State<MULTIPLYER_ENUM?>,) {
                 useCenter = true
             )
             drawArc(
-                color = SideTextColor,
+                color = color,
                 startAngle = startAngleSelected,
                 sweepAngle = sweepAngleSelected,
                 useCenter = true
@@ -223,13 +237,14 @@ fun ClaimButton(
     multipliyer: Int,
     balance: Float,
     progress: Float,
-    timerText: String,
+    leftTime: Long,
     isFarming: Boolean,
     isPressable: Boolean,
+    isAnimatable: Boolean,
     onPress: (() -> Unit)? = null,
     content: (@Composable () -> Unit)?=null
 ){
-    ButtonBackground(multipliyer,balance,progress,timerText,isFarming,isPressable,{
+    ButtonBackground(multipliyer,balance,progress,leftTime,isFarming,isPressable,isAnimatable,{
         if (onPress != null) {
             onPress()
         }

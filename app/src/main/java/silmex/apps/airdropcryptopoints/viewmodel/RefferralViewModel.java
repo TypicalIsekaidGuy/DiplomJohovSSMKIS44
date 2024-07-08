@@ -1,7 +1,5 @@
 package silmex.apps.airdropcryptopoints.viewmodel;
 
-import static androidx.core.content.ContextCompat.startActivity;
-
 import static silmex.apps.airdropcryptopoints.data.repository.MainDataRepository.fullTimerDuration;
 
 import android.annotation.SuppressLint;
@@ -10,20 +8,16 @@ import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
-import android.widget.Toast;
 
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModel;
 
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Objects;
 import java.util.Random;
-import java.util.stream.Collectors;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import javax.inject.Inject;
 
@@ -47,7 +41,6 @@ public class RefferralViewModel extends ViewModel {
     public MutableLiveData<Boolean> isMining = new MutableLiveData<>(false);
 
     //presentation vars
-    public MutableLiveData<List<Coin>> coins = new MutableLiveData<>(new ArrayList<>());
     public MutableLiveData<String> textValue = new MutableLiveData<>("");
     public Integer limitOfCode = 10;
     public MutableLiveData<Float> progress = new MutableLiveData<Float>(0f);
@@ -85,16 +78,13 @@ public class RefferralViewModel extends ViewModel {
         mainDataRepository.millisUntilFinishedLiveData.observeForever(new Observer<Long>() {
             @Override
             public void onChanged(Long newValue) {
+                if(newValue!=0) {
 
-                // For animation of coins
-                if(Boolean.FALSE.equals(MainActivity.Companion.isOnPaused().getValue())){
-                    addCoin(currentChosenMultipliyer.getValue().getValue());
-                }
+                    updateProgress(newValue);
 
-                updateProgress(newValue);
-
-                if(newValue<=500L){
-                    onTimerEnd();
+                    if (newValue <= 500L) {
+                        onTimerEnd();
+                    }
                 }
             }
         });
@@ -140,36 +130,11 @@ public class RefferralViewModel extends ViewModel {
     public void onTimerEnd(){
 
     }
-    public void removeCoin(Integer id) {
-        List<Coin> currentCoins = coins.getValue();
-        if (currentCoins != null) {
-            Log.d("VIEWMODElend",id.toString());
-            currentCoins.set(id,null);
-            coins.setValue(currentCoins);
-        }
-    }
     public void showToast(String text,Boolean hasSucceded){
         MainActivity.Companion.setHasSucceded(hasSucceded);
         MainActivity.Companion.getToastText().setValue(text);
     }
     public void updateProgress(Long estimatedTime){
         progress.setValue( ((float)estimatedTime/fullTimerDuration));
-    }
-    private void addCoin(Integer count){
-        if(coins.getValue().size()==500){
-            for(int i = 0; i<count; i++){
-                Integer j = 0;
-                List<Coin> coinList = coins.getValue();
-                while(coins.getValue().get(499) ==null){
-                    if(coins.getValue().get(j)==null){
-                        Random random = new Random();
-                        coinList.set(j,new Coin(j,random.nextFloat()+ 0.5f,random.nextFloat()/1.5f,random.nextFloat()/3,random.nextFloat()/3+ 0.5f,random.nextFloat()/3 + 0.5f));
-                        coins.setValue(coinList);
-                        break;
-                    }
-                    j++;
-                }
-            }
-        }
     }
 }

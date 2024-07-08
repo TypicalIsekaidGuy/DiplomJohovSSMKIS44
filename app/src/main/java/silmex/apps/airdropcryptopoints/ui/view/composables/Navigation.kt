@@ -26,20 +26,22 @@ import silmex.apps.airdropcryptopoints.ui.view.screen.RefferalsScreen
 import silmex.apps.airdropcryptopoints.ui.view.screen.SplashScreen
 import silmex.apps.airdropcryptopoints.ui.view.screen.WithdrawalScreen
 import silmex.apps.airdropcryptopoints.viewmodel.HomeViewModel
+import silmex.apps.airdropcryptopoints.viewmodel.MainViewModel
 import silmex.apps.airdropcryptopoints.viewmodel.RefferralViewModel
 import silmex.apps.airdropcryptopoints.viewmodel.WithdrawalViewModel
 
 @Composable
 fun Navigation() {
     val navController = rememberNavController()
-    var selected by remember{ mutableStateOf (Screen.HomeScreen) }
+    var selected by remember{ mutableStateOf (Screen.SplashScreen) }
+    val mainViewModel: MainViewModel = hiltViewModel<MainViewModel>()
     Box(
         Modifier
             .background(MainBG)
             .fillMaxSize()){
         NavHost(
             navController = navController,
-            startDestination = Screen.HomeScreen.route
+            startDestination = Screen.SplashScreen.route
         ) {
 
 
@@ -68,29 +70,32 @@ fun Navigation() {
                 }
             }
             composable(route = Screen.HomeScreen.route) {
-                HomeScreen(hiltViewModel<HomeViewModel>())
+                HomeScreen(hiltViewModel<HomeViewModel>(),mainViewModel)
             }
             composable(route = Screen.WithdrawalScreen.route) {
-                WithdrawalScreen(hiltViewModel<WithdrawalViewModel>())
+                WithdrawalScreen(hiltViewModel<WithdrawalViewModel>(),mainViewModel, {navController.navigate(Screen.WithdrawalScreen.route)})//TODO probably remoev
             }
             composable(route = Screen.RefferalsScreen.route) {
-                RefferalsScreen(hiltViewModel<RefferralViewModel>())
+                RefferalsScreen(hiltViewModel<RefferralViewModel>(),mainViewModel)
             }
         }
         if(selected== Screen.HomeScreen||selected== Screen.RefferalsScreen||selected== Screen.WithdrawalScreen){
             NavigationBottomBar(modifier = Modifier.align(Alignment.BottomCenter), selected, {
                 if(selected!= Screen.HomeScreen){
                     selected = Screen.HomeScreen
+                    mainViewModel.emptyCoinList()
                     navController.navigate(Screen.HomeScreen.route)
                 }
             }, {
                 if(selected!= Screen.RefferalsScreen){
                     selected = Screen.RefferalsScreen
+                    mainViewModel.emptyCoinList()
                     navController.navigate(Screen.RefferalsScreen.route)
                 }
             }, {
                 if(selected!= Screen.WithdrawalScreen){
                     selected = Screen.WithdrawalScreen
+                    mainViewModel.emptyCoinList()
                     navController.navigate(Screen.WithdrawalScreen.route)
                 }
             })

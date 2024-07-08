@@ -1,9 +1,17 @@
 package silmex.apps.airdropcryptopoints.ui.view.composables
 
 import android.util.Log
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.with
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -11,6 +19,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -52,17 +61,18 @@ fun ButtonBackground(
     multipliyer: Int,
     balance: Float,
     progress: Float,
-    timerText: String,
+    leftTime: Long,
     isFarming: Boolean = false,
      isPressable: Boolean = false,
+    isAnimatable: Boolean? = null,
      onPress: (() -> Unit)? = null,
      content: (@Composable () -> Unit)?=null,
      text: String = ""){
     if(isFarming){
-        ActiveBackground(multipliyer,balance,progress,timerText)
+        ActiveBackground(multipliyer,balance,progress,leftTime)
     }
     else{
-        InActiveBackground(isPressable = isPressable, onPress,content,"Claim")
+        InActiveBackground(isPressable = isPressable, onPress,content,if (balance==0f) "Start" else "Claim ${getBalanceText(balance)} Crypto Points",isAnimatable,)
     }
 }
 @Composable
@@ -70,7 +80,8 @@ fun InActiveBackground(
     isPressable: Boolean = false,
     onPress: (() -> Unit)? = null,
     content: (@Composable () -> Unit)?=null,
-    text: String = "") {
+    text: String = "",
+    isAnimatable: Boolean? = null,) {
 
 
     var paddingValues by remember { mutableStateOf(0f) }
@@ -85,6 +96,18 @@ fun InActiveBackground(
         animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing)
     )
 
+    if(isAnimatable == true){
+        LaunchedEffect(true){
+            while(true){
+                paddingValues = 12f
+                        paddingFontValues = 4f
+                    delay(600)
+                paddingValues = 0f
+                        paddingFontValues = 0f
+                    delay(600)
+            }
+        }
+    }
     val modifier = if(isPressable)
         Modifier
             .clickable(
@@ -140,6 +163,7 @@ fun InActiveBackground(
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxSize()){
                     if(text!=""){
                         Text(
+                            maxLines = 1,
                             text = text,
                             color = WhiteText,
                             fontFamily = itimStyle,
@@ -166,7 +190,7 @@ fun ActiveBackground(
     multipliyer: Int,
     balance: Float,
     progress: Float,
-    timerText: String){
+    leftTime: Long){
 
     Box(
         Modifier
@@ -207,27 +231,31 @@ fun ActiveBackground(
                             text = "Mining",
                             color = WhiteText,
                             textAlign = TextAlign.Center,fontFamily = itimStyle,
-                            fontSize = 20.sp
+                            fontSize = 18.sp
                         )
                         Row(horizontalArrangement = Arrangement.spacedBy(4.dp)){
-                            Image(painterResource(id = R.drawable.balance_small_icon),"",)
-
+                            Image(painterResource(id = R.drawable.balance_small_icon),"",modifier = Modifier.align(
+                                Alignment.CenterVertically
+                            ))
+/*
                             Text(//usdt
                                 text = getBalanceText(balance.toFloat()),
                                 color = WhiteText,
                                 textAlign = TextAlign.Center,fontFamily = itimStyle,
                                 fontSize = 20.sp
-                            )
+                            )*/
+                            AnimatedSum(balance.toInt())
                         }
                     }
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)){
 
-                        Text(//usdt
+/*                        Text(//usdt
                             text = timerText,
                             color = WhiteText,
                             textAlign = TextAlign.Center,fontFamily = itimStyle,
                             fontSize = 20.sp
-                        )
+                        )*/
+                        AnimatedNumbers(leftTime)
                         Row(horizontalArrangement = Arrangement.spacedBy(4.dp)){
                             Image(painterResource(id = R.drawable.boost_small_icon),"",)
 
@@ -235,7 +263,7 @@ fun ActiveBackground(
                                 text = "x$multipliyer",
                                 color = WhiteText,
                                 textAlign = TextAlign.Center,fontFamily = itimStyle,
-                                fontSize = 20.sp
+                                fontSize = 18.sp
                             )
                         }
                     }
@@ -245,6 +273,104 @@ fun ActiveBackground(
         }
     }
 }
+@OptIn(ExperimentalAnimationApi::class)
+@Composable
+fun AnimatedNumbers(timeRemaining: Long) {
+
+    val hours = ((timeRemaining/1000) / 3600).toInt()
+    val minutes = ((timeRemaining/1000) / 60).toInt()
+    val seconds = ((timeRemaining/1000) % 60).toInt()
+
+    Column(
+    ) {
+        Row {
+            AnimatedTimeUnit(timeUnit = hours / 10) // Tens place of minutes
+            AnimatedTimeUnit(timeUnit = hours % 10) // Tens place of minutes
+            Text(//usdt
+                text = ":",
+                color = WhiteText,
+                textAlign = TextAlign.Center,fontFamily = itimStyle,
+                fontSize = 18.sp
+            )
+            AnimatedTimeUnit(timeUnit = minutes / 10) // Tens place of minutes
+            AnimatedTimeUnit(timeUnit = minutes % 10) // Units place of minutes
+
+            Text(//usdt
+                text = ":",
+                color = WhiteText,
+                textAlign = TextAlign.Center,fontFamily = itimStyle,
+                fontSize = 18.sp
+            )
+            AnimatedTimeUnit(timeUnit = seconds / 10) // Tens place of seconds
+            AnimatedTimeUnit(timeUnit = seconds % 10) // Units place of seconds
+        }
+    }
+}
+@OptIn(ExperimentalAnimationApi::class)
+@Composable
+fun AnimatedSum(balance: Int) {
+
+    val lastNumber = balance%10
+    val number1 = balance/10 %10
+    val number2 = balance/100 %10
+    val number3 = balance/1000 %10
+    val number4 = balance/10000 %10
+    val number5 = balance/100000 %10
+    val number6 = balance/1000000 %10
+
+    LaunchedEffect(balance){
+        Log.d("UITEST1",number1.toString())
+        Log.d("UITEST2",number1.toString())
+        Log.d("UITEST5",number5.toString())
+        Log.d("UITEST6",number6.toString())
+    }
+    Column(
+    ) {
+        Row {
+            if(number6>0){
+                AnimatedTimeUnit(timeUnit = number6) // Units place of minutes
+            }
+            if(number6>0||number5>0){
+                AnimatedTimeUnit(timeUnit = number5) // Units place of minutes
+            }
+            if(number6>0||number5>0||number4>0){
+                AnimatedTimeUnit(timeUnit = number4) // Units place of minutes
+            }
+            if(number6>0||number5>0||number4>0||number3>0){
+                AnimatedTimeUnit(timeUnit = number3) // Units place of minutes
+            }
+            if(number6>0||number5>0||number4>0||number3>0||number2>0){
+                AnimatedTimeUnit(timeUnit = number2) // Units place of minutes
+            }
+            if(number6>0||number5>0||number4>0||number3>0||number2>0||number1>0){
+                AnimatedTimeUnit(timeUnit = number1) // Units place of minutes
+            }
+            AnimatedTimeUnit(timeUnit = lastNumber) // Units place of seconds
+        }
+    }
+}
+
+@OptIn(ExperimentalAnimationApi::class)
+@Composable
+fun AnimatedTimeUnit(timeUnit: Int) {
+    AnimatedContent(
+        targetState = timeUnit,
+        transitionSpec = {
+            (slideInVertically { height -> height } + fadeIn() with
+                    slideOutVertically { height -> -height } + fadeOut()).using(
+                SizeTransform(clip = false)
+            )
+        }
+    ) { targetNumber ->
+        Text(//usdt
+                            text = "$targetNumber",
+                            color = WhiteText,
+                            textAlign = TextAlign.Center,fontFamily = itimStyle,
+                            fontSize = 18.sp
+                        )
+    }
+}
+
 /*
 fun dateToString(date: DateTime){
 

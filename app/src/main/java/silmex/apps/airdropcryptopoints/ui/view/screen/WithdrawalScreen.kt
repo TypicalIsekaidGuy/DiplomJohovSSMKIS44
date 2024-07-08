@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -34,7 +33,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -43,13 +41,10 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.toUpperCase
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.MutableLiveData
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -63,34 +58,27 @@ import silmex.apps.airdropcryptopoints.ui.theme.MainTextColor
 import silmex.apps.airdropcryptopoints.ui.theme.NotUsedRed
 import silmex.apps.airdropcryptopoints.ui.theme.OffTextColor
 import silmex.apps.airdropcryptopoints.ui.theme.UsedGreen
-import silmex.apps.airdropcryptopoints.ui.theme.WhiteText
 import silmex.apps.airdropcryptopoints.ui.theme.WithdrawalTextColor
 import silmex.apps.airdropcryptopoints.ui.theme.average_text_size
-import silmex.apps.airdropcryptopoints.ui.theme.big_text_size
 import silmex.apps.airdropcryptopoints.ui.theme.itimStyle
 import silmex.apps.airdropcryptopoints.ui.view.composables.BalanceBar
 import silmex.apps.airdropcryptopoints.ui.view.composables.DashedLine
 import silmex.apps.airdropcryptopoints.ui.view.composables.InActiveBackground
-import silmex.apps.airdropcryptopoints.viewmodel.RefferralViewModel
+import silmex.apps.airdropcryptopoints.viewmodel.MainViewModel
 import silmex.apps.airdropcryptopoints.viewmodel.WithdrawalViewModel
 import java.util.Locale
 
 @Composable
-fun WithdrawalScreen(viewModel: WithdrawalViewModel){
+fun WithdrawalScreen(viewModel: WithdrawalViewModel,mainViewModel: MainViewModel, updateUI: ()->Unit){
     val balance by viewModel.balance.observeAsState()
     val isMining by viewModel.isMining.observeAsState()
-    val coins by viewModel.coins.observeAsState()
-    val transactionList = viewModel.transactionList
-    val transactionListtest by viewModel.transactionList.observeAsState()
+    val coins by mainViewModel.coins.observeAsState()
+    val transactionList by viewModel.transactionList.observeAsState()
     val uriGooglePlay by viewModel.mainDataRepository.urlGooglePlay.observeAsState()
     val progress by viewModel.progress.observeAsState()
 
-    LaunchedEffect(transactionListtest) {
-        Log.d("UITESTS",transactionListtest!!.size.toString())
-    }
-
-    val isPressable by remember {
-        mutableStateOf(true)
+    LaunchedEffect(transactionList) {
+        Log.d("UITESTS",transactionList!!.size.toString())
     }
 
     var hasShownFirstWithdrawal = remember {
@@ -106,8 +94,8 @@ fun WithdrawalScreen(viewModel: WithdrawalViewModel){
         Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp)
-            .padding(top = 32.dp), verticalArrangement = Arrangement.spacedBy(24.dp)) {
-        BalanceBar(balance!!,progress!!, isMining!!,coins!!, viewModel::removeCoin)
+            .padding(top = 32.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        BalanceBar(balance!!,progress!!, isMining!!,coins!!, mainViewModel::removeCoin)
         Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
 
             Text(
@@ -119,16 +107,19 @@ fun WithdrawalScreen(viewModel: WithdrawalViewModel){
                 modifier = Modifier
             )
 
-            InActiveBackground(isPressable,{
+            InActiveBackground(true,{
             MainScope().launch {
                 hasWorked.value = false
                 hasShownFirstWithdrawal.value = false
                 viewModel.withdrawalOnClick()
+                updateUI()
             }/*viewmodel.withdraw*/},null,"Withdraw")
         }
 
 
-        TransactionHistory(hasShownFirstWithdrawal = hasShownFirstWithdrawal, transactionList, hasWorked,onClick = viewModel::copyCodeOnClick)
+        TransactionHistory(
+            hasShownFirstWithdrawal = hasShownFirstWithdrawal, transactionList!!, hasWorked,
+            onClick = viewModel::copyCodeOnClick)
 
         val uriHandler = LocalUriHandler.current
         WithdrawalScreenEnd(){
@@ -173,8 +164,8 @@ fun WithdrawalScreenEnd(onClick: () -> Unit){
 }
 
 @Composable
-fun TransactionHistory(hasShownFirstWithdrawal: MutableState<Boolean>, transList: MutableLiveData<List<Transaction>?>, hasWorked:MutableState<Boolean>, onClick: (String)->Unit){
-    val list by transList.observeAsState(initial = listOf())
+fun TransactionHistory(hasShownFirstWithdrawal: MutableState<Boolean>, transList: List<Transaction>, hasWorked:MutableState<Boolean>, onClick: (String)->Unit){
+    val list = transList
     fun getMoneyText(sum: Float):String{
         val formattedValue = String.format("%.2f", sum)
         return formattedValue.toString()+" USDT"
@@ -223,6 +214,9 @@ fun TransactionHistory(hasShownFirstWithdrawal: MutableState<Boolean>, transList
         }
         if(!list.isNullOrEmpty()){
             LazyColumn(modifier = Modifier.fillMaxHeight(0.4F)){
+/*                items(list.size){
+                    LongWithdrawal(hasShownFirstWithdrawal,trans = list!![it],  it,list!!.size-1,hasWorked, {onClick(it)})
+                }*/
                 item{
                     LongWithdrawal(hasShownFirstWithdrawal,list!![0],0,  list!!.size-1,hasWorked) { onClick(it) }
                 }
