@@ -45,7 +45,7 @@ import silmex.apps.airdropcryptopoints.utils.IntegerUtils
 import silmex.apps.airdropcryptopoints.utils.StringUtils.getBalanceText
 
 @Composable
-fun BalanceBar(balance: Float,progress: Float, isFarming: Boolean, coins: List<Coin?>, onRemove: (Int) -> Unit) {
+fun BalanceBar(balance: Float,progress: Float, isFarming: Boolean, coins: List<Coin?>,currentMultiplier: Int, onRemove: (Int) -> Unit) {
     var progress = 1-progress
     var alphaText by remember { mutableStateOf(0f) }
 
@@ -126,7 +126,7 @@ fun BalanceBar(balance: Float,progress: Float, isFarming: Boolean, coins: List<C
             Text(getBalanceText(balance), fontSize = 48.sp, color = SideTextColor, fontFamily = itimStyle, modifier = Modifier)
             Spacer(Modifier.height(1.dp))
         }
-        FallingCoins(coins,maxHeight.value,maxWidth.value, onRemove)
+        FallingCoins(coins,maxHeight.value,maxWidth.value,1f+currentMultiplier*0.01f, onRemove)
         Text("Don't forget to claim your points when the timer ends", textAlign = TextAlign.Center, fontSize = average_text_size, color = FarmingProgressBG, fontFamily = itimStyle, maxLines = 1, modifier = Modifier
             .align(
                 Alignment.BottomCenter
@@ -143,7 +143,7 @@ fun formatTime(time: Int): String {
     return String.format("%02d:%02d", minutes, seconds)
 }
 @Composable
-fun FallingCoins(coins: List<Coin?>,maxHeight: Float, maxWidth: Float,onRemove: (Int) -> Unit) {
+fun FallingCoins(coins: List<Coin?>,maxHeight: Float, maxWidth: Float,speedModifier: Float,onRemove: (Int) -> Unit) {
     val scope = rememberCoroutineScope()
 
 /*    LaunchedEffect(Unit) {
@@ -164,6 +164,7 @@ fun FallingCoins(coins: List<Coin?>,maxHeight: Float, maxWidth: Float,onRemove: 
                 coin = coins[i]!!,
                 maxHeight = maxHeight,
                 maxWidth = maxWidth,
+                speedModifier = speedModifier,
                 onRemove = { onRemove(i) }
             )
         }
@@ -181,7 +182,7 @@ fun FallingCoins(coins: List<Coin?>,maxHeight: Float, maxWidth: Float,onRemove: 
 
 
 @Composable
-fun FallingCoin(modifier: Modifier, maxHeight: Float, maxWidth:Float, coin: Coin, onRemove: (Integer) -> Unit) {
+fun FallingCoin(modifier: Modifier, maxHeight: Float, maxWidth:Float, coin: Coin,speedModifier: Float, onRemove: (Integer) -> Unit) {
     val yOffset = remember { Animatable(coin.startY*maxHeight) }
     val xOffset = remember { Animatable(coin.startX*maxWidth) }
     val size = remember { Animatable(1f) }
@@ -192,30 +193,30 @@ fun FallingCoin(modifier: Modifier, maxHeight: Float, maxWidth:Float, coin: Coin
         scope.launch {
             yOffset.animateTo(
                 targetValue = coin.endY*maxHeight, // Adjust this value as needed for the falling distance
-                animationSpec = tween(durationMillis = 1000, easing = FastOutLinearInEasing)
+                animationSpec = tween(durationMillis = (1000/speedModifier).toInt(), easing = FastOutLinearInEasing)
             )
         }
         scope.launch {
             xOffset.animateTo(
                 targetValue = coin.endX*maxWidth, // Adjust this value as needed for the falling distance
-                animationSpec = tween(durationMillis = 1000, easing = FastOutLinearInEasing)
+                animationSpec = tween(durationMillis = (1000/speedModifier).toInt(), easing = FastOutLinearInEasing)
             )
         }
         scope.launch {
             size.animateTo(
                 targetValue = coin.endSize, // Adjust this value as needed for the falling distance
-                animationSpec = tween(durationMillis = 1000, easing = FastOutLinearInEasing)
+                animationSpec = tween(durationMillis = (1000/speedModifier).toInt(), easing = FastOutLinearInEasing)
             )
         }
         scope.launch {
             alpha.animateTo(
                 targetValue = 1f,
-                animationSpec = tween(durationMillis = 500, easing = FastOutLinearInEasing)
+                animationSpec = tween(durationMillis = (500/speedModifier).toInt(), easing = FastOutLinearInEasing)
             )
-            delay(200)
+            delay((200/speedModifier).toLong())
             alpha.animateTo(
                 targetValue = almostAlpha0,
-                animationSpec = tween(durationMillis = 300, easing = FastOutLinearInEasing)
+                animationSpec = tween(durationMillis = (300/speedModifier).toInt(), easing = FastOutLinearInEasing)
             )
             Log.d("Worked","work + "+coin.id)
             onRemove(coin.id) // Remove the coin after the animation ends

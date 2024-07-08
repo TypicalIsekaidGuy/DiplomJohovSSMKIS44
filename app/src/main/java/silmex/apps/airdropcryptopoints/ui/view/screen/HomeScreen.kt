@@ -67,7 +67,7 @@ fun HomeScreen(viewModel: HomeViewModel,mainViewModel: MainViewModel){
             .fillMaxWidth()
             .padding(horizontal = 16.dp)
             .padding(top = 32.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        BalanceBar(balance!!,progress!!, isMining!!,coins!!, mainViewModel::removeCoin)
+        BalanceBar(balance!!,progress!!, isMining!!,coins!!,currentBoost.value!!.value, mainViewModel::removeCoin)
         UpgradeWheel(isMiningLD, currentBoost) { viewModel.upgradeWheelClick() }
         ClaimButton(currentBoost!!.value!!.value,balance!!,
             progress!!,leftTime!!,isMining!!,!isMining!!,!isMining!!, {

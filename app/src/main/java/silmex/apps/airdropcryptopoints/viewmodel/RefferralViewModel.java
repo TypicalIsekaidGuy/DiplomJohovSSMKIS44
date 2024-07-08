@@ -36,7 +36,6 @@ public class RefferralViewModel extends ViewModel {
     Context context;
 
     //main vars
-    public MutableLiveData<MULTIPLYER_ENUM> currentChosenMultipliyer = new MutableLiveData<>(MULTIPLYER_ENUM.MULTYPLIER_1x);
     public MutableLiveData<Float> balance = new MutableLiveData<>(0f);
     public MutableLiveData<Boolean> isMining = new MutableLiveData<>(false);
 
@@ -53,13 +52,6 @@ public class RefferralViewModel extends ViewModel {
     }
 
     private void setUpObservers(){
-        mainDataRepository.currentChosenMultipliyer.observeForever(new Observer<MULTIPLYER_ENUM>() {
-            @Override
-            public void onChanged(MULTIPLYER_ENUM newValue) {
-
-                currentChosenMultipliyer.postValue(newValue);
-            }
-        });
         mainDataRepository.balance.observeForever(new Observer<Float>() {
             @Override
             public void onChanged(Float newValue) {

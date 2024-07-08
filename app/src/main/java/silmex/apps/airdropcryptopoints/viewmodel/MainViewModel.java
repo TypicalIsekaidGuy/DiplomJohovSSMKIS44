@@ -33,6 +33,9 @@ public class MainViewModel extends ViewModel {
 
     @SuppressLint("StaticFieldLeak")
     Context context;
+
+    //main vars
+    public MutableLiveData<MULTIPLYER_ENUM> currentChosenMultipliyer = new MutableLiveData<>(MULTIPLYER_ENUM.MULTYPLIER_1x);
     //presentation vars
     public MutableLiveData<List<Coin>> coins = new MutableLiveData<>(new ArrayList<>());
     public CountDownTimer coinTimer = null;
@@ -48,7 +51,7 @@ public class MainViewModel extends ViewModel {
         mainDataRepository.currentChosenMultipliyer.observeForever(new Observer<MULTIPLYER_ENUM>() {
             @Override
             public void onChanged(MULTIPLYER_ENUM newValue) {
-                updateTimer(newValue.getValue());
+                updateTimer(newValue);
             }
         });
     }
@@ -97,12 +100,12 @@ public class MainViewModel extends ViewModel {
             }
         }
     }
-    private void updateTimer(Integer count){
-        if(count!=0&&count<=55){
+    private void updateTimer(MULTIPLYER_ENUM count){
+        if(count.getValue()!=0&&count.getValue()<=55){
             if(coinTimer!=null){
                 coinTimer.cancel();
             }
-            coinTimer = new CountDownTimer(fullTimerDuration, 1000/count) {
+            coinTimer = new CountDownTimer(fullTimerDuration, 1000/(count.ordinal()+1)) {
                 public void onTick(long millisUntilFinished) {
                     if(millisUntilFinished<=500L){
                         if(coinTimer!=null){

@@ -74,13 +74,14 @@ fun RefferalsScreen(viewModel: RefferralViewModel,mainViewModel: MainViewModel){
     val textValue = viewModel.textValue
     val progress by viewModel.progress.observeAsState()
     val limitOfCode = viewModel.limitOfCode
+    val currentBoost by mainViewModel.currentChosenMultipliyer.observeAsState()
 
     Column(
         Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp)
             .padding(top = 32.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        BalanceBar(balance!!,progress!!, isMining!!,coins!!, mainViewModel::removeCoin)
+        BalanceBar(balance!!,progress!!, isMining!!,coins!!,currentBoost!!.value!!, mainViewModel::removeCoin)
         InviteRefferalTextBlock()
         CopyCodeBlock(code,{
                            viewModel.shareCodeOnClick()
