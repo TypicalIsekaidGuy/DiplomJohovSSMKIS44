@@ -15,6 +15,7 @@ import androidx.lifecycle.ViewModel;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -23,10 +24,24 @@ import javax.inject.Inject;
 
 import dagger.hilt.android.lifecycle.HiltViewModel;
 import dagger.hilt.android.qualifiers.ApplicationContext;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
 import silmex.apps.airdropcryptopoints.MainActivity;
+import silmex.apps.airdropcryptopoints.data.db.AppDatabase;
+import silmex.apps.airdropcryptopoints.data.db.maindata.MainDataTable;
 import silmex.apps.airdropcryptopoints.data.model.MULTIPLYER_ENUM;
+import silmex.apps.airdropcryptopoints.data.networkdata.dto.UserDTO;
+import silmex.apps.airdropcryptopoints.data.networkdata.response.ReferalsResponse;
+import silmex.apps.airdropcryptopoints.data.networkdata.response.UserResponse;
 import silmex.apps.airdropcryptopoints.data.repository.MainDataRepository;
+import silmex.apps.airdropcryptopoints.network.MainService;
 import silmex.apps.airdropcryptopoints.ui.view.composables.Coin;
+import silmex.apps.airdropcryptopoints.utils.CallbackI;
+import silmex.apps.airdropcryptopoints.utils.ConvertUtils;
+import silmex.apps.airdropcryptopoints.utils.MethodUtils;
+import silmex.apps.airdropcryptopoints.utils.TagUtils;
 
 @HiltViewModel
 public class RefferralViewModel extends ViewModel {
@@ -35,22 +50,32 @@ public class RefferralViewModel extends ViewModel {
     @SuppressLint("StaticFieldLeak")
     Context context;
 
+    Retrofit retrofit;
+
+    AppDatabase db;
+
     //main vars
     public MutableLiveData<Float> balance = new MutableLiveData<>(0f);
+    public MutableLiveData<Integer> refCode = new MutableLiveData<>(0);
     public MutableLiveData<Boolean> isMining = new MutableLiveData<>(false);
 
     //presentation vars
     public MutableLiveData<String> textValue = new MutableLiveData<>("");
+    public MutableLiveData<String> refferralTextValue1 = new MutableLiveData<>("");
+    public MutableLiveData<String> refferralTextValue2 = new MutableLiveData<>("");
     public Integer limitOfCode = 10;
     public MutableLiveData<Float> progress = new MutableLiveData<Float>(0f);
 
     @Inject
-    RefferralViewModel(@ApplicationContext Context context, MainDataRepository mainDataRepository){
+    RefferralViewModel(@ApplicationContext Context context, MainDataRepository mainDataRepository, Retrofit retrofit, AppDatabase db){
         this.mainDataRepository = mainDataRepository;
         this.context = context;
+        this.retrofit = retrofit;
+        this.db = db;
         setUpObservers();
     }
 
+    //main functions
     private void setUpObservers(){
         mainDataRepository.balance.observeForever(new Observer<Float>() {
             @Override
@@ -64,6 +89,43 @@ public class RefferralViewModel extends ViewModel {
             public void onChanged(Boolean newValue) {
 
                 isMining.postValue(newValue);
+            }
+        });
+        mainDataRepository.referralCode.observeForever(new Observer<Integer>() {
+            @Override
+            public void onChanged(Integer newValue) {
+                String target = refferralTextValue2.getValue();
+                if(target!=null){
+                    target = target.replace("#CODE#", Objects.requireNonNull(newValue).toString());
+
+                    refferralTextValue2.postValue(target);
+                }
+                refCode.postValue(newValue);
+                Log.d("REFFERAL1","WORKED" + refferralTextValue2.getValue());
+                Log.d("REFFERAL1","WORKED" + newValue);
+            }
+        });
+
+        mainDataRepository.refferalText1.observeForever(newValue -> refferralTextValue1.postValue(newValue));
+
+        mainDataRepository.refferealText2.observeForever(new Observer<String>() {
+            @Override
+            public void onChanged(String newValue) {
+                if(refCode.getValue()!=null&&refCode.getValue()!=0){
+                    String target = newValue.replace("#CODE#",refCode.getValue().toString());
+                    target = target.replace("#LINK#","https://play.google.com/store/apps/details?id="+MainActivity.Companion.getSource());
+
+                    refferralTextValue2.postValue(target);
+                }
+                else if(mainDataRepository.referralCode.getValue()!=null&&mainDataRepository.referralCode.getValue()!=0){
+                    String target = newValue.replace("#CODE#",mainDataRepository.referralCode.getValue().toString());
+                    target = target.replace("#LINK#","https://play.google.com/store/apps/details?id="+MainActivity.Companion.getSource());
+
+                    refferralTextValue2.postValue(target);
+                }
+                Log.d("REFFERAL2","WORKED" + refferralTextValue2.getValue());
+                Log.d("REFFERAL3","WORKED" + refCode.getValue());
+                Log.d("REFFERAL4","WORKED" + mainDataRepository.referralCode.getValue());
             }
         });
 
@@ -82,12 +144,41 @@ public class RefferralViewModel extends ViewModel {
         });
     }
 
+    private void updateReferralServer(String enteredCode, CallbackI callback){
+
+        MainService mainService = retrofit.create(MainService.class);
+
+        Call<ReferalsResponse> refResp = mainService.updateReferals(MainDataRepository.geteDeviceIdentifier(),enteredCode);
+        refResp.enqueue(new Callback<ReferalsResponse>() {
+            @Override
+            public void onResponse(Call<ReferalsResponse> call, Response<ReferalsResponse> response) {
+                if (response.isSuccessful()) {
+                    ReferalsResponse referalsResponse = response.body();
+
+                    assert referalsResponse != null;
+                    callback.onSuccess(referalsResponse.success==1);
+                    Log.d("network", ""+referalsResponse.success);
+                }
+                else {
+                    Log.d("network", "failure" + response.toString());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ReferalsResponse> call, Throwable t) {
+                callback.onFailure(t.getMessage());
+                Log.d("network", "failure" + t.getMessage());
+            }
+        });
+    }
+
+
     //onClick functions
     public void shareCodeOnClick(){
 
         Intent sendIntent = new Intent();
         sendIntent.setAction(Intent.ACTION_SEND);
-        sendIntent.putExtra(Intent.EXTRA_TEXT, mainDataRepository.referralCode.toString());
+        sendIntent.putExtra(Intent.EXTRA_TEXT, refferralTextValue2.getValue());
         sendIntent.setType("text/plain");
 
         Intent shareIntent = Intent.createChooser(sendIntent, null);
@@ -99,7 +190,7 @@ public class RefferralViewModel extends ViewModel {
     public void copyCodeOnClick(){
 
         ClipboardManager clipboard = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
-        ClipData clip = ClipData.newPlainText("Copied Text", mainDataRepository.referralCode.toString());
+        ClipData clip = ClipData.newPlainText("Copied Text", refCode.getValue().toString());
         clipboard.setPrimaryClip(clip);
         showToast("Referral code copied", true);
 
@@ -107,14 +198,52 @@ public class RefferralViewModel extends ViewModel {
 
     public void getBonusFromCodeOnClick(){
 
-        if(textValue.getValue().length()==limitOfCode){
-            showToast("Bonus added", true);
-            textValue.setValue("");
+        if(isOnline()){
+
+            if(textValue.getValue().length()==limitOfCode){
+                if(mainDataRepository.hasNotEnteredCode()){
+                    if(!Objects.equals(textValue.getValue(), Objects.requireNonNull(refCode.getValue()).toString())){
+                        updateReferralServer(mainDataRepository.referralCode.getValue().toString(), new CallbackI() {
+                            @Override
+                            public void onSuccess(boolean success) {
+                                getOtherCodeBonus(success);
+                            }
+
+                            @Override
+                            public void onFailure(String errorMessage) {
+                                showToast("Wrong referral code", false);
+                                Log.e("network", "Error: " + errorMessage);
+                            }
+                        });
+                    }
+                    else{
+                        showToast("You can't use your own code", false);
+                    }
+                }
+                else{
+                    showToast("You already used referral code", false);
+                }
+            }
+            else{
+                showToast("Wrong referral code", false);
+            }
         }
         else{
-            showToast("Wrong Referral code", false);
+            showToast("Turn on Internet", false);
         }
 
+    }
+
+    //helper functions
+    private void getOtherCodeBonus(boolean success){
+        if (success) {
+            mainDataRepository.getRefferalYourCodeBonus(1);
+            saveUserData();
+            showToast("Bonus added", true);
+            MethodUtils.safeSetValue(textValue,"");
+        } else {
+            showToast("Wrong referral code", false);
+        }
     }
 
 
@@ -124,9 +253,44 @@ public class RefferralViewModel extends ViewModel {
     }
     public void showToast(String text,Boolean hasSucceded){
         MainActivity.Companion.setHasSucceded(hasSucceded);
-        MainActivity.Companion.getToastText().setValue(text);
+        MethodUtils.safeSetValue(MainActivity.Companion.getToastText(),text);
     }
     public void updateProgress(Long estimatedTime){
         progress.setValue( ((float)estimatedTime/fullTimerDuration));
+    }
+
+    //util functions
+    public boolean isOnline(){
+        return MainActivity.Companion.isOnline(context);
+    }
+    private void saveUserData(){
+
+        MainService mainService = retrofit.create(MainService.class);
+
+        Call<UserResponse> userResp = mainService.getUser(MainDataRepository.geteDeviceIdentifier());
+        userResp.enqueue(new Callback<UserResponse>() {
+            @Override
+            public void onResponse(Call<UserResponse> call, Response<UserResponse> response) {
+                if (response.isSuccessful()) {
+                    Log.d("network", "PROBLEM");
+                    UserResponse userResponse = response.body();
+                    UserDTO user = userResponse.users.get(0);
+
+                    AppDatabase.databaseWriteExecutor.execute(() -> {
+                        MainDataTable mdt = new MainDataTable(mainDataRepository, ConvertUtils.stringToDate(user.serverTime).getTime());
+                        db.mainDataDao().update(mdt);
+                        Log.d("Balance",user.serverTime);
+                    });
+                }
+                else {
+                    Log.d("network", "failure" + response.toString());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<UserResponse> call, Throwable t) {
+                Log.d("network", "failure" + t.getMessage());
+            }
+        });
     }
 }

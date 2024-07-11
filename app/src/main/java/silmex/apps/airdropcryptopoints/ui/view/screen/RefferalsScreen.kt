@@ -66,15 +66,20 @@ import silmex.apps.airdropcryptopoints.viewmodel.MainViewModel
 import silmex.apps.airdropcryptopoints.viewmodel.RefferralViewModel
 
 @Composable
-fun RefferalsScreen(viewModel: RefferralViewModel,mainViewModel: MainViewModel){
+fun RefferalsScreen(viewModel: RefferralViewModel,mainViewModel: MainViewModel, onLaunch: ()->Unit){
     val balance by viewModel.balance.observeAsState()
     val isMining by viewModel.isMining.observeAsState()
     val coins by mainViewModel.coins.observeAsState()
-    val code = viewModel.mainDataRepository.referralCode
+    val code = viewModel.refCode.observeAsState()
     val textValue = viewModel.textValue
+    val refText1 by viewModel.refferralTextValue1.observeAsState()
     val progress by viewModel.progress.observeAsState()
     val limitOfCode = viewModel.limitOfCode
     val currentBoost by mainViewModel.currentChosenMultipliyer.observeAsState()
+
+    LaunchedEffect(true) {
+        onLaunch()
+    }
 
     Column(
         Modifier
@@ -82,8 +87,8 @@ fun RefferalsScreen(viewModel: RefferralViewModel,mainViewModel: MainViewModel){
             .padding(horizontal = 16.dp)
             .padding(top = 32.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         BalanceBar(balance!!,progress!!, isMining!!,coins!!,currentBoost!!.value!!, mainViewModel::removeCoin)
-        InviteRefferalTextBlock()
-        CopyCodeBlock(code,{
+        InviteRefferalTextBlock(refText1!!)
+        CopyCodeBlock(code.value!!,{
                            viewModel.shareCodeOnClick()
         },{
             viewModel.copyCodeOnClick()
@@ -96,10 +101,10 @@ fun RefferalsScreen(viewModel: RefferralViewModel,mainViewModel: MainViewModel){
 }
 
 @Composable
-fun InviteRefferalTextBlock(){
+fun InviteRefferalTextBlock(refText1: String){
     Column(verticalArrangement = Arrangement.spacedBy(12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
         Text("Invite Referral", fontSize = big_text_size, color = MainTextColor, fontFamily = itimStyle, textAlign = TextAlign.Center)
-        Text("Invite friends and receive \"n\" crypto points, each invited friend will receive \"m\" crypto points", fontSize = average_text_size, color = MainTextColor, fontFamily = itimStyle, textAlign = TextAlign.Center)
+        Text(refText1, fontSize = average_text_size, color = MainTextColor, fontFamily = itimStyle, textAlign = TextAlign.Center)
 
     }
 }

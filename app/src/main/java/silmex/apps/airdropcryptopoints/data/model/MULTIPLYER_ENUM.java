@@ -14,4 +14,12 @@ public enum MULTIPLYER_ENUM {
     private final int value;
     private MULTIPLYER_ENUM(int v) { value = v; }
     public int getValue() { return value; }
+    public static MULTIPLYER_ENUM getEnumValue(int v) {
+        for (MULTIPLYER_ENUM enumValue : values()) {
+            if (enumValue.getValue() == v) {
+                return enumValue;
+            }
+        }
+        return null; // or throw an exception if not found
+    }
 }

@@ -1,24 +1,35 @@
 package silmex.apps.airdropcryptopoints
 
+import android.app.Application
+import android.content.Context
 import android.content.Intent
+import android.content.res.Resources
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.net.Uri
 import android.os.Bundle
+import android.telephony.TelephonyManager
+import android.util.Log
 import android.view.View
 import android.widget.Toast
 import android.widget.Toast.LENGTH_SHORT
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.core.view.WindowCompat
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.MutableLiveData
 import dagger.hilt.android.AndroidEntryPoint
 import silmex.apps.airdropcryptopoints.ui.view.CustomToastView
 import silmex.apps.airdropcryptopoints.ui.view.composables.Navigation
+import silmex.apps.airdropcryptopoints.utils.TagUtils
+import silmex.apps.airdropcryptopoints.viewmodel.MainViewModel
 
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
-
+    private val mainViewModel: MainViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -28,7 +39,7 @@ class MainActivity : ComponentActivity() {
         setUpObservers()
 
         setContent {
-            Navigation()
+            Navigation(mainViewModel)
         }
     }
 
@@ -40,6 +51,8 @@ class MainActivity : ComponentActivity() {
     override fun onPause() {
         super.onPause()
         isOnPaused.value = true
+
+        mainViewModel.saveUserData()
     }
 
 
@@ -100,6 +113,8 @@ class MainActivity : ComponentActivity() {
 
     //object for interacting with activity
     companion object{
+        val source = "silmex.apps.airdropcryptopoints"
+
         var isOnPaused = MutableLiveData<Boolean>(false)
 
         var shareIntent = MutableLiveData<Intent>();
@@ -108,5 +123,36 @@ class MainActivity : ComponentActivity() {
 
         var hasSucceded: Boolean? = null;
 
+
+
+        fun isOnline(context: Context): Boolean {
+            val connectivityManager =
+                context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+            if (connectivityManager != null) {
+                val capabilities =
+                    connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)
+                if (capabilities != null) {
+                    if (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)) {
+                        Log.i("Internet", "NetworkCapabilities.TRANSPORT_CELLULAR")
+                        return true
+                    } else if (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) {
+                        Log.i("Internet", "NetworkCapabilities.TRANSPORT_WIFI")
+                        return true
+                    } else if (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)) {
+                        Log.i("Internet", "NetworkCapabilities.TRANSPORT_ETHERNET")
+                        return true
+                    }
+                }
+            }
+            return false
+        }
+
+        fun getLocale(application: Application): String{
+            val tm =  application.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager;
+            var lang = tm.getNetworkCountryIso();
+            if (lang == null){    lang = Resources.getSystem().getConfiguration().locale.getLanguage();
+            }
+            return lang
+        }
     }
 }

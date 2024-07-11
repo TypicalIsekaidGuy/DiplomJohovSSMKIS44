@@ -1,12 +1,20 @@
 package silmex.apps.airdropcryptopoints.di;
 
+import android.content.Context;
+
+import androidx.room.Room;
+
 import javax.inject.Singleton;
 
 import dagger.Module;
 import dagger.Provides;
 import dagger.hilt.InstallIn;
+import dagger.hilt.android.qualifiers.ApplicationContext;
 import dagger.hilt.components.SingletonComponent;
+import retrofit2.Retrofit;
+import silmex.apps.airdropcryptopoints.data.db.AppDatabase;
 import silmex.apps.airdropcryptopoints.data.repository.MainDataRepository;
+import silmex.apps.airdropcryptopoints.network.RetrofitClient;
 
 @Module
 @InstallIn(SingletonComponent.class)
@@ -15,5 +23,18 @@ public class AppModule {
     @Singleton
     public static MainDataRepository providesMainDataRepository(){
         return new MainDataRepository();
+    }
+
+
+    @Singleton
+    @Provides
+    public static AppDatabase provideAppDatabase(@ApplicationContext Context context){
+        return AppDatabase.getDatabase(context);
+    }
+
+    @Singleton
+    @Provides
+    public static Retrofit provideRetrofitClient(){
+        return RetrofitClient.getClient();
     }
 }

@@ -53,7 +53,7 @@ import silmex.apps.airdropcryptopoints.viewmodel.HomeViewModel
 import silmex.apps.airdropcryptopoints.viewmodel.MainViewModel
 
 @Composable
-fun HomeScreen(viewModel: HomeViewModel,mainViewModel: MainViewModel){
+fun HomeScreen(viewModel: HomeViewModel,mainViewModel: MainViewModel, onLaunch: ()->Unit){
     val currentBoost = viewModel.currentChosenMultipliyer.observeAsState()
     val balance by viewModel.balance.observeAsState()
     val isMining by viewModel.isMining.observeAsState()
@@ -61,6 +61,10 @@ fun HomeScreen(viewModel: HomeViewModel,mainViewModel: MainViewModel){
     val leftTime by viewModel.leftTime.observeAsState()
     val progress by viewModel.progress.observeAsState()
     val coins by mainViewModel.coins.observeAsState()
+
+    LaunchedEffect(true) {
+        onLaunch()
+    }
 
     Column(
         Modifier
@@ -148,7 +152,7 @@ fun UpgradeWheel(isActive: MutableLiveData<Boolean>, currentBoost: State<MULTIPL
                 painter = painterResource(id = if(isActive.value!!) R.drawable.upgrade_center_active else R.drawable.upgrade_center_unactive),
                 contentDescription = null,
                 modifier = clickable
-                    .padding(if (currentBoost.value!=MULTIPLYER_ENUM.MULTYPLIER_55x) animatedPaddingValues1.dp else 0.dp)
+                    .padding(if (currentBoost.value != MULTIPLYER_ENUM.MULTYPLIER_55x) animatedPaddingValues1.dp else 0.dp)
                     .align(Alignment.Center)
             )
         }

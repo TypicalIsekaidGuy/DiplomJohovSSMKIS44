@@ -1,10 +1,13 @@
 package silmex.apps.airdropcryptopoints.ui.view.composables
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -25,16 +28,20 @@ import silmex.apps.airdropcryptopoints.ui.view.screen.LearningScreen3
 import silmex.apps.airdropcryptopoints.ui.view.screen.RefferalsScreen
 import silmex.apps.airdropcryptopoints.ui.view.screen.SplashScreen
 import silmex.apps.airdropcryptopoints.ui.view.screen.WithdrawalScreen
+import silmex.apps.airdropcryptopoints.utils.TagUtils
 import silmex.apps.airdropcryptopoints.viewmodel.HomeViewModel
 import silmex.apps.airdropcryptopoints.viewmodel.MainViewModel
 import silmex.apps.airdropcryptopoints.viewmodel.RefferralViewModel
 import silmex.apps.airdropcryptopoints.viewmodel.WithdrawalViewModel
 
 @Composable
-fun Navigation() {
+fun Navigation(mainViewModel: MainViewModel) {
     val navController = rememberNavController()
+    val didShowLearning by mainViewModel.didShowLearningScreen.observeAsState()
     var selected by remember{ mutableStateOf (Screen.SplashScreen) }
-    val mainViewModel: MainViewModel = hiltViewModel<MainViewModel>()
+    LaunchedEffect(true) {
+        Log.d(TagUtils.MAINVIEWMODELTAG,"WORKEDUI")
+    }
     Box(
         Modifier
             .background(MainBG)
@@ -47,8 +54,8 @@ fun Navigation() {
 
             composable(route = Screen.SplashScreen.route){
                 SplashScreen {
-                    selected = Screen.LearningScreen1
-                    navController.navigate(Screen.LearningScreen1.route)
+                    selected = if (!didShowLearning!!) Screen.LearningScreen1 else Screen.HomeScreen
+                    navController.navigate(if (!didShowLearning!!) Screen.LearningScreen1.route else Screen.HomeScreen.route)
                 }
             }
             composable(route = Screen.LearningScreen1.route){
@@ -58,25 +65,26 @@ fun Navigation() {
                 }
             }
             composable(route = Screen.LearningScreen2.route){
-                LearningScreen2{
+                LearningScreen2(mainViewModel.mainDataRepository.learningText){
                     selected = Screen.LearningScreen3
                     navController.navigate(Screen.LearningScreen3.route)
                 }
             }
             composable(route = Screen.LearningScreen3.route){
                 LearningScreen3{
+                    mainViewModel.updateShowLearning()
                     selected = Screen.HomeScreen
                     navController.navigate(Screen.HomeScreen.route)
                 }
             }
             composable(route = Screen.HomeScreen.route) {
-                HomeScreen(hiltViewModel<HomeViewModel>(),mainViewModel)
+                HomeScreen(hiltViewModel<HomeViewModel>(),mainViewModel,{selected = Screen.HomeScreen})
             }
             composable(route = Screen.WithdrawalScreen.route) {
-                WithdrawalScreen(hiltViewModel<WithdrawalViewModel>(),mainViewModel, {navController.navigate(Screen.WithdrawalScreen.route)})//TODO probably remoev
+                WithdrawalScreen(hiltViewModel<WithdrawalViewModel>(),mainViewModel,{selected = Screen.WithdrawalScreen}, {navController.navigate(Screen.WithdrawalScreen.route)})//TODO probably remoev
             }
             composable(route = Screen.RefferalsScreen.route) {
-                RefferalsScreen(hiltViewModel<RefferralViewModel>(),mainViewModel)
+                RefferalsScreen(hiltViewModel<RefferralViewModel>(),mainViewModel,{selected = Screen.RefferalsScreen})
             }
         }
         if(selected== Screen.HomeScreen||selected== Screen.RefferalsScreen||selected== Screen.WithdrawalScreen){

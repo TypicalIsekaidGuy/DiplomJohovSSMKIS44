@@ -13,12 +13,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.MutableLiveData
 import silmex.apps.airdropcryptopoints.R
 import silmex.apps.airdropcryptopoints.ui.theme.ButtonTextColor
 import silmex.apps.airdropcryptopoints.ui.theme.MainTextColor
@@ -32,7 +35,8 @@ import silmex.apps.airdropcryptopoints.ui.view.composables.MultiStyleText
 import silmex.apps.airdropcryptopoints.ui.view.composables.NavigateToButton
 
 @Composable
-fun LearningScreen2(navigateTo:()->Unit){
+fun LearningScreen2(learningText: MutableLiveData<String>, navigateTo:()->Unit){
+    val text by learningText.observeAsState()
 
     Box(Modifier.fillMaxSize()) {
         Column(
@@ -47,7 +51,7 @@ fun LearningScreen2(navigateTo:()->Unit){
                     .fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(70.dp)
             ) {
                 Text(
-                    text = "Invite friends and get \n 10 000 Crypto Points",
+                    text = text!!,
                     color = MainTextColor,
                     fontFamily = itimStyle,
                     fontSize = big_text_size,
@@ -69,14 +73,19 @@ fun LearningScreen2(navigateTo:()->Unit){
                 Image(
                     painter = painterResource(id = R.drawable.get_bonus_illustration),
                     contentDescription = "",
-                    modifier = Modifier.align(Alignment.CenterHorizontally).fillMaxWidth(),
+                    modifier = Modifier
+                        .align(Alignment.CenterHorizontally)
+                        .fillMaxWidth(),
                     contentScale = ContentScale.FillWidth
                 )
             }
         }
 
         Column (Modifier.align(Alignment.BottomCenter)){
-            Box(Modifier.fillMaxWidth().padding(horizontal = 16.dp)){
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)){
                 NavigateToButton("NEXT", Modifier, { navigateTo() })
             }
             Spacer(modifier = Modifier.fillMaxHeight(0.1f))

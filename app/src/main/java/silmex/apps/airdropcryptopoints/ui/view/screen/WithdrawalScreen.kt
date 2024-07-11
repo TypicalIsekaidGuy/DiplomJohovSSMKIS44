@@ -69,7 +69,7 @@ import silmex.apps.airdropcryptopoints.viewmodel.WithdrawalViewModel
 import java.util.Locale
 
 @Composable
-fun WithdrawalScreen(viewModel: WithdrawalViewModel,mainViewModel: MainViewModel, updateUI: ()->Unit){
+fun WithdrawalScreen(viewModel: WithdrawalViewModel,mainViewModel: MainViewModel, onLaunch: ()->Unit, updateUI: ()->Unit){
     val balance by viewModel.balance.observeAsState()
     val isMining by viewModel.isMining.observeAsState()
     val coins by mainViewModel.coins.observeAsState()
@@ -78,8 +78,8 @@ fun WithdrawalScreen(viewModel: WithdrawalViewModel,mainViewModel: MainViewModel
     val uriGooglePlay by viewModel.mainDataRepository.urlGooglePlay.observeAsState()
     val progress by viewModel.progress.observeAsState()
 
-    LaunchedEffect(transactionList) {
-        Log.d("UITESTS",transactionList!!.size.toString())
+    LaunchedEffect(true) {
+        onLaunch()
     }
 
     var hasShownFirstWithdrawal = remember {

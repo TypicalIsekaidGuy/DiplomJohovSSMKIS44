@@ -127,7 +127,7 @@ fun BalanceBar(balance: Float,progress: Float, isFarming: Boolean, coins: List<C
             Spacer(Modifier.height(1.dp))
         }
         FallingCoins(coins,maxHeight.value,maxWidth.value,1f+currentMultiplier*0.01f, onRemove)
-        Text("Don't forget to claim your points when the timer ends", textAlign = TextAlign.Center, fontSize = average_text_size, color = FarmingProgressBG, fontFamily = itimStyle, maxLines = 1, modifier = Modifier
+        Text("Don't forget to claim points when the timer ends", textAlign = TextAlign.Center, fontSize = average_text_size, color = FarmingProgressBG, fontFamily = itimStyle, maxLines = 1, modifier = Modifier
             .align(
                 Alignment.BottomCenter
             )
