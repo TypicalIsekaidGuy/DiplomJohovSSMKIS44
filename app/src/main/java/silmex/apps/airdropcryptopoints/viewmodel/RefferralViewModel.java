@@ -13,12 +13,7 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModel;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
-import java.util.Random;
-import java.util.Timer;
-import java.util.TimerTask;
 
 import javax.inject.Inject;
 
@@ -31,17 +26,14 @@ import retrofit2.Retrofit;
 import silmex.apps.airdropcryptopoints.MainActivity;
 import silmex.apps.airdropcryptopoints.data.db.AppDatabase;
 import silmex.apps.airdropcryptopoints.data.db.maindata.MainDataTable;
-import silmex.apps.airdropcryptopoints.data.model.MULTIPLYER_ENUM;
 import silmex.apps.airdropcryptopoints.data.networkdata.dto.UserDTO;
 import silmex.apps.airdropcryptopoints.data.networkdata.response.ReferalsResponse;
 import silmex.apps.airdropcryptopoints.data.networkdata.response.UserResponse;
 import silmex.apps.airdropcryptopoints.data.repository.MainDataRepository;
 import silmex.apps.airdropcryptopoints.network.MainService;
-import silmex.apps.airdropcryptopoints.ui.view.composables.Coin;
-import silmex.apps.airdropcryptopoints.utils.CallbackI;
+import silmex.apps.airdropcryptopoints.data.interfaces.CallbackI;
 import silmex.apps.airdropcryptopoints.utils.ConvertUtils;
 import silmex.apps.airdropcryptopoints.utils.MethodUtils;
-import silmex.apps.airdropcryptopoints.utils.TagUtils;
 
 @HiltViewModel
 public class RefferralViewModel extends ViewModel {

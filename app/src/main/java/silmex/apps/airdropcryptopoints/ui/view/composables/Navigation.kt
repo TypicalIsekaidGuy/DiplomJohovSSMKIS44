@@ -19,7 +19,9 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import silmex.apps.airdropcryptopoints.data.interfaces.UpgradeWheelCallBack
 import silmex.apps.airdropcryptopoints.data.model.Screen
+import silmex.apps.airdropcryptopoints.data.repository.UnityAdsRepository
 import silmex.apps.airdropcryptopoints.ui.theme.MainBG
 import silmex.apps.airdropcryptopoints.ui.view.screen.HomeScreen
 import silmex.apps.airdropcryptopoints.ui.view.screen.LearningScreen1
@@ -39,8 +41,14 @@ fun Navigation(mainViewModel: MainViewModel) {
     val navController = rememberNavController()
     val didShowLearning by mainViewModel.didShowLearningScreen.observeAsState()
     var selected by remember{ mutableStateOf (Screen.SplashScreen) }
+
+    val homeViewModel: HomeViewModel = hiltViewModel<HomeViewModel>()
+    val referralViewModel: RefferralViewModel = hiltViewModel<RefferralViewModel>()
+    val withdrawalViewModel: WithdrawalViewModel = hiltViewModel<WithdrawalViewModel>()
+
     LaunchedEffect(true) {
         Log.d(TagUtils.MAINVIEWMODELTAG,"WORKEDUI")
+        UnityAdsRepository.callBack = homeViewModel
     }
     Box(
         Modifier
@@ -78,13 +86,13 @@ fun Navigation(mainViewModel: MainViewModel) {
                 }
             }
             composable(route = Screen.HomeScreen.route) {
-                HomeScreen(hiltViewModel<HomeViewModel>(),mainViewModel,{selected = Screen.HomeScreen})
+                HomeScreen(homeViewModel,mainViewModel,{selected = Screen.HomeScreen})
             }
             composable(route = Screen.WithdrawalScreen.route) {
-                WithdrawalScreen(hiltViewModel<WithdrawalViewModel>(),mainViewModel,{selected = Screen.WithdrawalScreen}, {navController.navigate(Screen.WithdrawalScreen.route)})//TODO probably remoev
+                WithdrawalScreen(withdrawalViewModel,mainViewModel,{selected = Screen.WithdrawalScreen}, {navController.navigate(Screen.WithdrawalScreen.route)})//TODO probably remoev
             }
             composable(route = Screen.RefferalsScreen.route) {
-                RefferalsScreen(hiltViewModel<RefferralViewModel>(),mainViewModel,{selected = Screen.RefferalsScreen})
+                RefferalsScreen(referralViewModel,mainViewModel,{selected = Screen.RefferalsScreen})
             }
         }
         if(selected== Screen.HomeScreen||selected== Screen.RefferalsScreen||selected== Screen.WithdrawalScreen){

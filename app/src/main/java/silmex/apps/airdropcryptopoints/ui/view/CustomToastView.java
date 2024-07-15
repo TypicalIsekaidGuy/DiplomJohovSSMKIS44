@@ -6,8 +6,9 @@ import android.view.Gravity;
 import androidx.core.content.res.ResourcesCompat;
 
 import silmex.apps.airdropcryptopoints.R;
+import androidx.appcompat.widget.AppCompatTextView;
 
-public class CustomToastView extends androidx.appcompat.widget.AppCompatTextView {
+public class CustomToastView extends AppCompatTextView {
 
     public CustomToastView(Context context, Boolean hasSucceded) {
         super(context);

@@ -6,7 +6,6 @@ import android.content.Intent
 import android.content.res.Resources
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
-import android.net.Uri
 import android.os.Bundle
 import android.telephony.TelephonyManager
 import android.util.Log
@@ -17,13 +16,14 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.core.view.WindowCompat
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.MutableLiveData
 import dagger.hilt.android.AndroidEntryPoint
+import silmex.apps.airdropcryptopoints.data.repository.UnityAdsRepository
 import silmex.apps.airdropcryptopoints.ui.view.CustomToastView
 import silmex.apps.airdropcryptopoints.ui.view.composables.Navigation
-import silmex.apps.airdropcryptopoints.utils.TagUtils
+import silmex.apps.airdropcryptopoints.viewmodel.HomeViewModel
 import silmex.apps.airdropcryptopoints.viewmodel.MainViewModel
+import javax.inject.Inject
 
 
 @AndroidEntryPoint
@@ -31,12 +31,18 @@ class MainActivity : ComponentActivity() {
 
     private val mainViewModel: MainViewModel by viewModels()
 
+    @Inject
+    lateinit var unityAdsRepository: UnityAdsRepository
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         enableAntiScreenshoting()
-
         setUpObservers()
+
+        if(unityAdsRepository!=null){
+            HomeViewModel.unityAdsRepository = unityAdsRepository
+        }
 
         setContent {
             Navigation(mainViewModel)
@@ -155,4 +161,5 @@ class MainActivity : ComponentActivity() {
             return lang
         }
     }
+
 }

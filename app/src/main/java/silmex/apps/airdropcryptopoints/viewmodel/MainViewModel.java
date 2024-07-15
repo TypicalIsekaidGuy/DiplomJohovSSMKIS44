@@ -60,12 +60,19 @@ public class MainViewModel extends ViewModel {
 
     Retrofit retrofit;
 
+
     //main vars
     public MutableLiveData<Boolean> didShowLearningScreen = new MutableLiveData<>(false);
+
     public MutableLiveData<MULTIPLYER_ENUM> currentChosenMultipliyer = new MutableLiveData<>(MULTIPLYER_ENUM.MULTYPLIER_1x);
+
     //presentation vars
     public MutableLiveData<List<Coin>> coins = new MutableLiveData<>(new ArrayList<>());
+
     public MutableLiveData<Float> balance = new MutableLiveData<Float>(0f);
+
+    public static MutableLiveData<Boolean> hasLoadedAd = new MutableLiveData<Boolean>(false);
+
     public CountDownTimer coinTimer = null;
 
     @Inject
@@ -75,9 +82,9 @@ public class MainViewModel extends ViewModel {
         this.db = db;
         this.retrofit = retrofit;
         Log.d(TagUtils.MAINVIEWMODELTAG,"Worked main");
+
         setUpObservers();
         setUpPresentationVars();
-
         loadAllData();
     }
 
@@ -122,9 +129,12 @@ public class MainViewModel extends ViewModel {
                 long exitTime = System.currentTimeMillis();
                 MainDataRepository.random_for_save = IntegerUtils.generateRandomInteger();
                 md.insert(new MainDataTable(MainDataRepository.random_for_save,exitTime));
+                log("User with id"+StringUtils.generateDeviceIdentifier()+" created");
             }
             else{
                 mainDataRepository.updateMainDataRepo(mdt, System.currentTimeMillis());
+
+                log("User with id"+StringUtils.generateDeviceIdentifier()+" got in OnCreate");
             }
 
 
@@ -186,6 +196,7 @@ public class MainViewModel extends ViewModel {
                 long exitTime = System.currentTimeMillis();
                 MainDataRepository.random_for_save = IntegerUtils.generateRandomInteger();
                 md.insert(new MainDataTable(MainDataRepository.random_for_save,exitTime));
+                log("User with id"+StringUtils.generateDeviceIdentifier()+" created");
             }
             else{
                 MainDataTable new_mdt = new MainDataTable(mdt.random_save_id,true,mdt.balance,mdt.currentChosenMultipliyerValue,mdt.isActive,mdt.exit_time,mdt.estimated_end_time, mdt.referals);

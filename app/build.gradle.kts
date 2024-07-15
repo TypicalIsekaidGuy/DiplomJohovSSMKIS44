@@ -64,6 +64,7 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    implementation(libs.androidx.appcompat)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -79,6 +80,7 @@ dependencies {
 
 
     val nav_version = "2.7.7"
+/*
 
     // Java language implementation
     implementation("androidx.navigation:navigation-fragment:$nav_version")
@@ -92,6 +94,7 @@ dependencies {
 
     // Testing Navigation
     androidTestImplementation("androidx.navigation:navigation-testing:$nav_version")
+*/
 
     // Jetpack Compose Integration
     implementation("androidx.navigation:navigation-compose:$nav_version")
