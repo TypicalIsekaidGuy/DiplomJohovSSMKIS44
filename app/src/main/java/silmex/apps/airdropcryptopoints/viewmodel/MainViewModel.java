@@ -75,6 +75,9 @@ public class MainViewModel extends ViewModel {
 
     public CountDownTimer coinTimer = null;
 
+    //one-time vars
+    private boolean userHasBeenJustCreated = false;
+
     @Inject
     MainViewModel(@ApplicationContext Context context, AppDatabase db, MainDataRepository mainDataRepository, Retrofit retrofit){
         this.mainDataRepository = mainDataRepository;
@@ -129,11 +132,11 @@ public class MainViewModel extends ViewModel {
                 long exitTime = System.currentTimeMillis();
                 MainDataRepository.random_for_save = IntegerUtils.generateRandomInteger();
                 md.insert(new MainDataTable(MainDataRepository.random_for_save,exitTime));
+                userHasBeenJustCreated = true;
                 log("User with id"+StringUtils.generateDeviceIdentifier()+" created");
             }
             else{
                 mainDataRepository.updateMainDataRepo(mdt, System.currentTimeMillis());
-
                 log("User with id"+StringUtils.generateDeviceIdentifier()+" got in OnCreate");
             }
 
@@ -196,10 +199,11 @@ public class MainViewModel extends ViewModel {
                 long exitTime = System.currentTimeMillis();
                 MainDataRepository.random_for_save = IntegerUtils.generateRandomInteger();
                 md.insert(new MainDataTable(MainDataRepository.random_for_save,exitTime));
+                userHasBeenJustCreated = true;
                 log("User with id"+StringUtils.generateDeviceIdentifier()+" created");
             }
             else{
-                MainDataTable new_mdt = new MainDataTable(mdt.random_save_id,true,mdt.balance,mdt.currentChosenMultipliyerValue,mdt.isActive,mdt.exit_time,mdt.estimated_end_time, mdt.referals);
+                MainDataTable new_mdt = new MainDataTable(mdt.random_save_id,true,mdt.balance,mdt.currentChosenMultipliyerValue,mdt.isActive,mdt.isActive,mdt.exit_time,mdt.estimated_end_time,mdt.cooldown_estimated_end_time, mdt.referals);
                 md.update(new_mdt);
             }
         });
@@ -236,6 +240,7 @@ public class MainViewModel extends ViewModel {
                         if(user.referals>mdt.referals){
                             getYourCodeBonus(user.referals-mdt.referals, user.referals);
                         }
+                        setUpCooldown(mdt.cooldown_estimated_end_time);
                     });
                 }
                 else {
@@ -274,7 +279,6 @@ public class MainViewModel extends ViewModel {
                     MethodUtils.safeSetValue(mainDataRepository.learningText,configDTO.learningText);
                     MethodUtils.safeSetValue(mainDataRepository.refferalText1,configDTO.refferalText1);
                     MethodUtils.safeSetValue(mainDataRepository.refferealText2,configDTO.refferealText2);
-
                 }
                 else {
                     Log.d("network", "failure" + response.toString());
@@ -309,12 +313,11 @@ public class MainViewModel extends ViewModel {
                     mainDataRepository.yourRefferalBonus = configDTO.referalBonusToUser;
                     mainDataRepository.otherRefferalBonus = configDTO.referalBonusForOthers;
                     mainDataRepository.convertValueToOneUsdt = configDTO.convertValueToOneUsdt;
-                    mainDataRepository.widthdrawalDelay = configDTO.widthdrawalDelay;
+                    mainDataRepository.widthdrawalDelay = 100*1000;//Todo change back
 
                     MethodUtils.safeSetValue(mainDataRepository.learningText,configDTO.learningText);
                     MethodUtils.safeSetValue(mainDataRepository.refferalText1,configDTO.refferalText1);
                     MethodUtils.safeSetValue(mainDataRepository.refferealText2,configDTO.refferealText2);
-
                 }
                 else {
                     Log.d("network", "failure" + response.toString());
@@ -332,6 +335,12 @@ public class MainViewModel extends ViewModel {
         mainDataRepository.getRefferalOtherCodeBonus(diff);
         mainDataRepository.referals = toSave;
         saveUserData();
+    }
+
+    private void setUpCooldown(long delay){
+        if(userHasBeenJustCreated){
+            mainDataRepository.tryRefreshCooldown(mainDataRepository.widthdrawalDelay);
+        }
     }
 
 

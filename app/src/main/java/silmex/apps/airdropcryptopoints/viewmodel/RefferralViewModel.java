@@ -195,7 +195,7 @@ public class RefferralViewModel extends ViewModel {
             if(textValue.getValue().length()==limitOfCode){
                 if(mainDataRepository.hasNotEnteredCode()){
                     if(!Objects.equals(textValue.getValue(), Objects.requireNonNull(refCode.getValue()).toString())){
-                        updateReferralServer(mainDataRepository.referralCode.getValue().toString(), new CallbackI() {
+                        updateReferralServer(textValue.getValue(), new CallbackI() {
                             @Override
                             public void onSuccess(boolean success) {
                                 getOtherCodeBonus(success);

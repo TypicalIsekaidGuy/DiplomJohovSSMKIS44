@@ -145,6 +145,7 @@ public class WithdrawalViewModel extends ViewModel {
     //onClick functions
     public void withdrawalOnClick(){
         if(!isMining.getValue()){
+            if(mainDataRepository.canWithdraw.getValue()!=null&&mainDataRepository.canWithdraw.getValue()){
                 WithdrawalService serviceTrans = RetrofitClient.getClient().create(WithdrawalService.class);
                 Float bucks = mainDataRepository.getBalanceForWithdrawal();
                 if(bucks!=null){
@@ -159,7 +160,7 @@ public class WithdrawalViewModel extends ViewModel {
                                     if(transResponse.success==1){
 
                                         MainViewModel.log("User made withdrawal for: "+bucks);
-                                        mainDataRepository.resetBalance();
+                                        mainDataRepository.refreshCooldown(mainDataRepository.widthdrawalDelay);
                                         saveUserData();
                                         getTransaction();
                                         Log.d("VIEWMODELTESTS",""+mainDataRepository.transactionList.getValue().size());
@@ -181,6 +182,10 @@ public class WithdrawalViewModel extends ViewModel {
                         }
                     });
                 }
+            }
+            else{
+                showToast("Cooldown: "+ mainDataRepository.cooldownmillisUntilFinishedLiveData.getValue(),false);
+            }
         }
         else{
             showToast("Don't forget to claim your points when the timer ends",false);

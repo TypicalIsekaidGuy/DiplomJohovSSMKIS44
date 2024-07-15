@@ -12,7 +12,7 @@ import java.util.concurrent.Executors;
 import silmex.apps.airdropcryptopoints.data.db.maindata.MainDataDao;
 import silmex.apps.airdropcryptopoints.data.db.maindata.MainDataTable;
 
-@Database(entities = {MainDataTable.class}, version = 3)
+@Database(entities = {MainDataTable.class}, version =5)
 public abstract class AppDatabase extends RoomDatabase {
     public abstract MainDataDao mainDataDao();
 

@@ -82,6 +82,8 @@ public class MainDataRepository {
     public int convertValueToOneUsdt =198000;
     public long widthdrawalDelay =86400000;
 
+    public MutableLiveData<Boolean> canWithdraw =new MutableLiveData<>(false);
+
     //presentation vars
     public MutableLiveData<String> learningText = new MutableLiveData<String>("Invite friends and get \n1 000 000 Crypto Points");
     public MutableLiveData<String> refferalText1 = new MutableLiveData<String>("Invite friends and receive 1 000 000 crypto points, each invited friend will receive 1 000 000 crypto points");
@@ -91,8 +93,10 @@ public class MainDataRepository {
 
     //timer vars
     public CountDownTimer mainTimer;
+    public CountDownTimer withdrawalCooldownTimer;
     public static final long fullTimerDuration = 14400000/60;//TODO change to 14400000
     public MutableLiveData<Long> millisUntilFinishedLiveData = new MutableLiveData<>(0L);
+    public MutableLiveData<Long> cooldownmillisUntilFinishedLiveData = new MutableLiveData<>(0L);
     public long tempLeftTime = 0;
 
     //main vars setters
@@ -126,26 +130,10 @@ public class MainDataRepository {
                     }
                     MethodUtils.safeSetValue(balance,Objects.requireNonNull(balance.getValue())+ Objects.requireNonNull(currentChosenMultipliyer.getValue()).getValue());
                     MethodUtils.safeSetValue(millisUntilFinishedLiveData,millisUntilFinished);
-/*                    mainHandler.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            if(millisUntilFinished<=500L){
-                                turnOffTimer();
-                            }
-                            MethodUtils.safeSetValue(balance,Objects.requireNonNull(balance.getValue())+ Objects.requireNonNull(currentChosenMultipliyer.getValue()).getValue());
-                            MethodUtils.safeSetValue(millisUntilFinishedLiveData,millisUntilFinished);
-                        }
-                    });*/
                 }
                 public void onFinish() {
 
                     turnOffTimer();
-/*                    mainHandler.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            turnOffTimer();
-                        }
-                    });*/
                 }
             }.start();
     }
@@ -159,6 +147,44 @@ public class MainDataRepository {
             mainTimer.cancel();
             mainTimer = null;
         }
+    }
+
+    public void refreshCooldown(long estimatedEndTime){
+        Log.d("Repo","refreshed");
+            if(estimatedEndTime>=widthdrawalDelay){
+                resetBalance();
+            }
+            MethodUtils.safeSetValue(canWithdraw,false);
+            withdrawalCooldownTimer = new CountDownTimer(estimatedEndTime, 1000) {
+                public void onTick(long millisUntilFinished) {
+                    if(millisUntilFinished<=500L){
+                        turnOffCooldownTimer();
+                    }
+                    MethodUtils.safeSetValue(cooldownmillisUntilFinishedLiveData,millisUntilFinished);
+                }
+                public void onFinish() {
+                    turnOffCooldownTimer();
+                }
+            }.start();
+    }
+
+    public void turnOffCooldownTimer(){
+
+        Log.d("Repo","turned off cooldown");
+        MethodUtils.safeSetValue(canWithdraw,true);
+        if(withdrawalCooldownTimer!=null){
+            withdrawalCooldownTimer.cancel();
+            withdrawalCooldownTimer = null;
+        }
+    }
+
+    public void tryRefreshCooldown(long estimatedTime){
+        new Handler(Looper.getMainLooper()).post(new Runnable() {
+            @Override
+            public void run() {
+                refreshCooldown(estimatedTime);
+            }
+        });
     }
 
     public void getRefferalYourCodeBonus(Integer diff){
@@ -196,36 +222,6 @@ public class MainDataRepository {
         MethodUtils.safeSetValue(didShowLearning,mdt.didShowLearning);
         MethodUtils.safeSetValue(currentChosenMultipliyer,MULTIPLYER_ENUM.getEnumValue(mdt.currentChosenMultipliyerValue));
         MethodUtils.safeSetValue(isActive,mdt.isActive);
-
-/*        if(mdt.isActive){
-            tempLeftTime  = (currentTime - mdt.exit_time)/1000L;
-            long timerDiffernce = (tempLeftTime - mdt.estimated_end_time/1000L);
-
-            Log.d("Values",""+mdt.exit_time);
-            Log.d("Values",""+currentTime);
-            Log.d("Values",""+tempLeftTime);
-            Log.d("Values",""+mdt.estimated_end_time/1000L);
-            Log.d("Values",""+timerDiffernce);
-
-            if(timerDiffernce<=0){
-
-                MethodUtils.safeSetValue(balance,mdt.balance + mdt.currentChosenMultipliyerValue*Math.abs(tempLeftTime));
-                MethodUtils.safeSetValue(millisUntilFinishedLiveData,Math.abs(timerDiffernce*1000L));
-
-                new Handler(Looper.getMainLooper()).post(new Runnable() {
-                    @Override
-                    public void run() {
-                        updateTimer(Math.abs(timerDiffernce*1000L));
-                    }
-                });
-            }
-            else{
-                MethodUtils.safeSetValue(balance,mdt.balance + mdt.currentChosenMultipliyerValue*(mdt.estimated_end_time/1000L));
-            }
-        }
-        else{
-            MethodUtils.safeSetValue(balance,mdt.balance);
-        }*/
         MethodUtils.safeSetValue(balance,mdt.balance);
     }
     public void updateMainDataRepo(MainDataTable mdt, Date serverTime){
@@ -262,6 +258,20 @@ public class MainDataRepository {
         }
         else{
             MethodUtils.safeSetValue(balance,mdt.balance);
+        }
+        if(Boolean.FALSE.equals(canWithdraw.getValue())||mdt.cooldown_estimated_end_time==0){
+            long temp  = (serverTime.getTime() - mdt.exit_time);
+            if(temp-mdt.cooldown_estimated_end_time<=0){
+                tryRefreshCooldown(mdt.cooldown_estimated_end_time-temp);
+            }
+            else{
+                MethodUtils.safeSetValue(canWithdraw,true);
+                MethodUtils.safeSetValue(cooldownmillisUntilFinishedLiveData,0L);
+            }
+        }
+        else{
+            MethodUtils.safeSetValue(canWithdraw,mdt.can_withdraw);
+            MethodUtils.safeSetValue(cooldownmillisUntilFinishedLiveData,0L);
         }
     }
 }
