@@ -69,7 +69,7 @@ import silmex.apps.airdropcryptopoints.viewmodel.WithdrawalViewModel
 import java.util.Locale
 
 @Composable
-fun WithdrawalScreen(viewModel: WithdrawalViewModel,mainViewModel: MainViewModel, onLaunch: ()->Unit, updateUI: ()->Unit){
+fun WithdrawalScreen(viewModel: WithdrawalViewModel,mainViewModel: MainViewModel, onLaunch: ()->Unit){
     val balance by viewModel.balance.observeAsState()
     val isMining by viewModel.isMining.observeAsState()
     val coins by mainViewModel.coins.observeAsState()
@@ -100,7 +100,7 @@ fun WithdrawalScreen(viewModel: WithdrawalViewModel,mainViewModel: MainViewModel
         Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
 
             Text(
-                text = "Withdrawal on 1st and 15th of each month",
+                text = "Withdrawal will be available after a day",
                 color = MainTextColor,
                 fontFamily = itimStyle,
                 fontSize = average_text_size,
@@ -113,8 +113,7 @@ fun WithdrawalScreen(viewModel: WithdrawalViewModel,mainViewModel: MainViewModel
                 hasWorked.value = false
                 hasShownFirstWithdrawal.value = false
                 viewModel.withdrawalOnClick()
-                updateUI()
-            }/*viewmodel.withdraw*/},null,"Withdraw")
+            }},null,"Withdraw")
         }
 
 
@@ -232,9 +231,9 @@ fun TransactionHistory(hasShownFirstWithdrawal: MutableState<Boolean>, transList
             }
         }
         if(list!!.isEmpty()){
+            Spacer(modifier = Modifier.fillMaxHeight(0.2f))
             Row(modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 80.dp), horizontalArrangement = Arrangement.Center){
+                .fillMaxWidth(), horizontalArrangement = Arrangement.Center){
                 Text(text = "Here will be your withdrawals",
                     fontSize = 16.sp,
                     color = OffTextColor,
@@ -243,9 +242,7 @@ fun TransactionHistory(hasShownFirstWithdrawal: MutableState<Boolean>, transList
                             Alignment.CenterVertically
                         ))
             }
-            Spacer(modifier = Modifier
-                .fillMaxWidth()
-                .height((32 + 120).dp))
+            Spacer(modifier = Modifier.fillMaxHeight(0.2f))
         }
     }
 

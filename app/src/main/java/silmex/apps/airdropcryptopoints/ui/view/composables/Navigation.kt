@@ -89,7 +89,7 @@ fun Navigation(mainViewModel: MainViewModel) {
                 HomeScreen(homeViewModel,mainViewModel,{selected = Screen.HomeScreen})
             }
             composable(route = Screen.WithdrawalScreen.route) {
-                WithdrawalScreen(withdrawalViewModel,mainViewModel,{selected = Screen.WithdrawalScreen}, {navController.navigate(Screen.WithdrawalScreen.route)})//TODO probably remoev
+                WithdrawalScreen(withdrawalViewModel,mainViewModel,{selected = Screen.WithdrawalScreen})
             }
             composable(route = Screen.RefferalsScreen.route) {
                 RefferalsScreen(referralViewModel,mainViewModel,{selected = Screen.RefferalsScreen})

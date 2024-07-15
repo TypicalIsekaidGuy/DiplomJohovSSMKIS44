@@ -170,22 +170,23 @@ public class MainDataRepository {
     public void claimBalance(){
         MethodUtils.safeSetValue(currentChosenMultipliyer,MULTIPLYER_ENUM.MULTYPLIER_1x);
     }
-    public void addTransaction(){
-        List<Transaction> transactions = transactionList.getValue();
-        transactions.add(new Transaction(ConvertUtils.stringToDate("2024-04-10 11:23:34"),114.32F,"","","","231ssывыфв",0));
-        Collections.sort(transactions);
-
-        MethodUtils.safeSetValue(transactionList,transactions);
+    public void resetBalance(){
+        MethodUtils.safeSetValue(balance,0f);
     }
-
+    public Float getBalanceForWithdrawal(){
+        int crypto_points = Objects.requireNonNull(balance.getValue()).intValue();
+        float bucks = (float) crypto_points /convertValueToOneUsdt;
+        if(bucks<minValue){
+            return minValue;
+        }
+        if(bucks>maxValue){
+            return maxValue;
+        }
+        return bucks;
+    }
     //constructor
     public MainDataRepository(){
-        List<Transaction> transactions = transactionList.getValue();
-        transactions.add(new Transaction(ConvertUtils.stringToDate("2024-03-10 11:23:32"),114.32F,"","","","231sasdasa",0));
-        transactions.add(new Transaction(ConvertUtils.stringToDate("2024-04-10 11:23:31"),114.32F,"","","","sadsdasd",1));
-        transactions.add(new Transaction(ConvertUtils.stringToDate("2024-05-10 11:23:30"),114.32F,"","","","37ygjhkhtu8",2));
-        Collections.sort(transactions);
-        MethodUtils.safeSetValue(transactionList,transactions);
+
     }
 
     public void updateMainDataRepo(MainDataTable mdt, Long currentTime){
