@@ -109,7 +109,7 @@ fun LearningScreen1(navigateTo:()->Unit) {
             Box(Modifier.fillMaxWidth().padding(horizontal = 16.dp)){
                 NavigateToButton("NEXT", Modifier, { navigateTo() })
             }
-            Spacer(modifier = Modifier.fillMaxHeight(0.1f))
+            Spacer(modifier = Modifier.fillMaxHeight(0.07f))
         }
     }
 }

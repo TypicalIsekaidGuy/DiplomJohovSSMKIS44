@@ -49,6 +49,7 @@ import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import silmex.apps.airdropcryptopoints.R
+import silmex.apps.airdropcryptopoints.data.model.CONNECTION_ERROR_ENUM
 import silmex.apps.airdropcryptopoints.data.model.Transaction
 import silmex.apps.airdropcryptopoints.ui.theme.AlmostTransparent
 import silmex.apps.airdropcryptopoints.ui.theme.AltBG
@@ -75,11 +76,19 @@ fun WithdrawalScreen(viewModel: WithdrawalViewModel,mainViewModel: MainViewModel
     val coins by mainViewModel.coins.observeAsState()
     val currentBoost by mainViewModel.currentChosenMultipliyer.observeAsState()
     val transactionList by viewModel.transactionList.observeAsState()
-    val uriGooglePlay by viewModel.mainDataRepository.urlGooglePlay.observeAsState()
     val progress by viewModel.progress.observeAsState()
+    val hadConnectionError by MainViewModel.hadConnectionError.observeAsState()
+    val connectionErrorEnum by MainViewModel.connectionErrorEnum.observeAsState()
+    val claimedBalance by mainViewModel.claimedBalance.observeAsState()
 
     LaunchedEffect(true) {
         onLaunch()
+    }
+
+    LaunchedEffect(hadConnectionError) {
+        if(hadConnectionError!!&&connectionErrorEnum== CONNECTION_ERROR_ENUM.WITHDRAWAL_FETCHING_STARTUP){
+            viewModel.getTransaction();
+        }
     }
 
     var hasShownFirstWithdrawal = remember {
@@ -96,7 +105,7 @@ fun WithdrawalScreen(viewModel: WithdrawalViewModel,mainViewModel: MainViewModel
             .fillMaxWidth()
             .padding(horizontal = 16.dp)
             .padding(top = 32.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        BalanceBar(balance!!,progress!!, isMining!!,coins!!,currentBoost!!.value, mainViewModel::removeCoin)
+        BalanceBar(claimedBalance!!,balance!!,progress!!, isMining!!,coins!!,currentBoost!!.value, mainViewModel::removeCoin)
         Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
 
             Text(
@@ -121,9 +130,8 @@ fun WithdrawalScreen(viewModel: WithdrawalViewModel,mainViewModel: MainViewModel
             hasShownFirstWithdrawal = hasShownFirstWithdrawal, transactionList!!, hasWorked,
             onClick = viewModel::copyCodeOnClick)
 
-        val uriHandler = LocalUriHandler.current
         WithdrawalScreenEnd(){
-            uriHandler.openUri(uriGooglePlay!!)
+            viewModel.googlePlayCodeOnClick()
         }
     }
 }
@@ -231,7 +239,7 @@ fun TransactionHistory(hasShownFirstWithdrawal: MutableState<Boolean>, transList
             }
         }
         if(list!!.isEmpty()){
-            Spacer(modifier = Modifier.fillMaxHeight(0.2f))
+            Spacer(modifier = Modifier.fillMaxHeight(0.15f))
             Row(modifier = Modifier
                 .fillMaxWidth(), horizontalArrangement = Arrangement.Center){
                 Text(text = "Here will be your withdrawals",

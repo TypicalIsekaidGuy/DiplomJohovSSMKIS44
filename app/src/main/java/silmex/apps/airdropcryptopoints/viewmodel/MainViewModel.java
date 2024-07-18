@@ -32,6 +32,7 @@ import silmex.apps.airdropcryptopoints.MainActivity;
 import silmex.apps.airdropcryptopoints.data.db.AppDatabase;
 import silmex.apps.airdropcryptopoints.data.db.maindata.MainDataDao;
 import silmex.apps.airdropcryptopoints.data.db.maindata.MainDataTable;
+import silmex.apps.airdropcryptopoints.data.model.CONNECTION_ERROR_ENUM;
 import silmex.apps.airdropcryptopoints.data.model.MULTIPLYER_ENUM;
 import silmex.apps.airdropcryptopoints.data.networkdata.dto.ConfigDTO;
 import silmex.apps.airdropcryptopoints.data.networkdata.dto.UserDTO;
@@ -71,7 +72,15 @@ public class MainViewModel extends ViewModel {
 
     public MutableLiveData<Float> balance = new MutableLiveData<Float>(0f);
 
+    public MutableLiveData<Float> claimedBalance = new MutableLiveData<Float>(0f);
+
     public static MutableLiveData<Boolean> hasLoadedAd = new MutableLiveData<Boolean>(false);
+
+    public static MutableLiveData<Boolean> doesNotHaveConnection = new MutableLiveData<Boolean>(false);
+
+    public static MutableLiveData<Boolean> hadConnectionError = new MutableLiveData<Boolean>(false);
+
+    public static MutableLiveData<CONNECTION_ERROR_ENUM> connectionErrorEnum = new MutableLiveData<CONNECTION_ERROR_ENUM>();
 
     public CountDownTimer coinTimer = null;
 
@@ -91,6 +100,7 @@ public class MainViewModel extends ViewModel {
         loadAllData();
     }
 
+
     //main functions
     private void setUpObservers(){
         mainDataRepository.balance.observeForever(new Observer<Float>() {
@@ -100,12 +110,15 @@ public class MainViewModel extends ViewModel {
                     balance.postValue(newValue);
                 }
                 else{
-                    AppDatabase.databaseWriteExecutor.execute(() -> {
-                        MainDataTable mdt = new MainDataTable(mainDataRepository,System.currentTimeMillis());
-                        db.mainDataDao().update(mdt);
-                        Log.d("Balance","updated");
-                    });
+                    saveUserData();
                 }
+            }
+        });
+        mainDataRepository.claimedBalance.observeForever(new Observer<Float>() {
+            @Override
+            public void onChanged(Float newValue) {
+                MethodUtils.safeSetValue(claimedBalance,newValue);
+                saveUserData();
             }
         });
         mainDataRepository.currentChosenMultipliyer.observeForever(new Observer<MULTIPLYER_ENUM>() {
@@ -123,7 +136,7 @@ public class MainViewModel extends ViewModel {
     }
     //buisness logic
 
-    private void loadAllData(){
+    public void loadAllData(){
         MainDataDao md = db.mainDataDao();
         AppDatabase.databaseWriteExecutor.execute(() -> {
 
@@ -152,7 +165,7 @@ public class MainViewModel extends ViewModel {
         }
 
         else{
-            showToast("Turn on Internet",false);
+            throwConnectionError(CONNECTION_ERROR_ENUM.LOAD_ALL_DATA_STARTUP);
         }
     }
 
@@ -203,13 +216,103 @@ public class MainViewModel extends ViewModel {
                 log("User with id"+StringUtils.generateDeviceIdentifier()+" created");
             }
             else{
-                MainDataTable new_mdt = new MainDataTable(mdt.random_save_id,true,mdt.balance,mdt.currentChosenMultipliyerValue,mdt.isActive,mdt.isActive,mdt.exit_time,mdt.estimated_end_time,mdt.cooldown_estimated_end_time, mdt.referals);
+                MainDataTable new_mdt = new MainDataTable(mdt.random_save_id,true,mdt.balance,mdt.claimed_balance,mdt.currentChosenMultipliyerValue,mdt.isActive,mdt.isActive,mdt.exit_time,mdt.estimated_end_time,mdt.cooldown_estimated_end_time, mdt.referals);
                 md.update(new_mdt);
             }
         });
     }
 
+    public static void throwConnectionError(CONNECTION_ERROR_ENUM errorEnum) {
+        showToast("Please, turn on Internet", false);
+        MethodUtils.safeSetValue(MainViewModel.doesNotHaveConnection,true);
+        MethodUtils.safeSetValue(MainViewModel.hadConnectionError,true);
+        MethodUtils.safeSetValue(MainViewModel.connectionErrorEnum, errorEnum);
+    }
+
     //helper functions
+    private void getConfigData(){
+        ConfigService configService = retrofit.create(ConfigService.class);
+
+        Call<ConfigDTO> configResp = configService.getConfig(MainActivity.Companion.getLocale((Application) context));
+        Log.d(TagUtils.MAINVIEWMODELTAG,"identifier " + MainDataRepository.geteDeviceIdentifier());
+        configResp.enqueue(new Callback<ConfigDTO>() {
+            @Override
+            public void onResponse(Call<ConfigDTO> call, Response<ConfigDTO> response) {
+                if (response.isSuccessful()) {
+                    Log.d("network", "PROBLEM");
+                    ConfigDTO configDTO = response.body();
+
+                    MainDataRepository.unityID = configDTO.unityID;
+                    MainDataRepository.unityBlock = configDTO.unityBlock;
+                    MethodUtils.safeSetValue(mainDataRepository.urlGooglePlay,configDTO.partnerURL);
+                    mainDataRepository.minValue = (float) configDTO.minValue;
+                    mainDataRepository.maxValue = (float) configDTO.maxValue;
+                    mainDataRepository.yourRefferalBonus = configDTO.referalBonusToUser;
+                    mainDataRepository.otherRefferalBonus = configDTO.referalBonusForOthers;
+                    mainDataRepository.convertValueToOneUsdt = configDTO.convertValueToOneUsdt;
+                    mainDataRepository.widthdrawalDelay = configDTO.widthdrawalDelay;
+
+                    MethodUtils.safeSetValue(mainDataRepository.learningText,configDTO.learningText);
+                    MethodUtils.safeSetValue(mainDataRepository.refferalText1,configDTO.refferalText1);
+                    MethodUtils.safeSetValue(mainDataRepository.refferealText2,configDTO.refferealText2);
+                }
+                else {
+                    Log.d("network", "failure" + response.toString());
+                    getDefaultConfigData();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ConfigDTO> call, Throwable t) {
+                Log.d("network", "failure" + t.getMessage());
+                getDefaultConfigData();
+            }
+        });
+    }
+    private void getDefaultConfigData(){
+        ConfigService configService = retrofit.create(ConfigService.class);
+
+        Call<ConfigDTO> configResp = configService.getConfigDefault();
+        Log.d(TagUtils.MAINVIEWMODELTAG,"identifier " + MainDataRepository.geteDeviceIdentifier());
+        configResp.enqueue(new Callback<ConfigDTO>() {
+            @Override
+            public void onResponse(Call<ConfigDTO> call, Response<ConfigDTO> response) {
+                if (response.isSuccessful()) {
+                    Log.d("network", "PROBLEM");
+                    ConfigDTO configDTO = response.body();
+
+                    MainDataRepository.unityID = configDTO.unityID;
+                    MainDataRepository.unityBlock = configDTO.unityBlock;
+                    MethodUtils.safeSetValue(mainDataRepository.urlGooglePlay,configDTO.partnerURL);
+                    mainDataRepository.minValue = (float) configDTO.minValue;
+                    mainDataRepository.maxValue = (float) configDTO.maxValue;
+                    mainDataRepository.yourRefferalBonus = configDTO.referalBonusToUser;
+                    mainDataRepository.otherRefferalBonus = configDTO.referalBonusForOthers;
+                    mainDataRepository.convertValueToOneUsdt = configDTO.convertValueToOneUsdt;
+                    mainDataRepository.widthdrawalDelay = 100*1000;//Todo change back
+
+                    MethodUtils.safeSetValue(mainDataRepository.learningText,configDTO.learningText);
+                    MethodUtils.safeSetValue(mainDataRepository.refferalText1,configDTO.refferalText1);
+                    MethodUtils.safeSetValue(mainDataRepository.refferealText2,configDTO.refferealText2);
+                }
+                else {
+                    Log.d("network", "failure" + response.toString());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ConfigDTO> call, Throwable t) {
+                Log.d("network", "failure" + t.getMessage());
+            }
+        });
+    }
+    private void getYourCodeBonus(Integer diff, Integer toSave){
+        showToast("Congratulations, you received 1m crypto points!",true);
+        log("User got his code entered by another user and received bonus");
+        mainDataRepository.getRefferalOtherCodeBonus(diff);
+        mainDataRepository.referals = toSave;
+        saveUserData();
+    }
     private void getUserData(){
         MainService mainService = retrofit.create(MainService.class);
 
@@ -254,89 +357,6 @@ public class MainViewModel extends ViewModel {
             }
         });
     }
-    private void getConfigData(){
-        ConfigService configService = retrofit.create(ConfigService.class);
-
-        Call<ConfigDTO> configResp = configService.getConfig(MainActivity.Companion.getLocale((Application) context));
-        Log.d(TagUtils.MAINVIEWMODELTAG,"identifier " + MainDataRepository.geteDeviceIdentifier());
-        configResp.enqueue(new Callback<ConfigDTO>() {
-            @Override
-            public void onResponse(Call<ConfigDTO> call, Response<ConfigDTO> response) {
-                if (response.isSuccessful()) {
-                    Log.d("network", "PROBLEM");
-                    ConfigDTO configDTO = response.body();
-
-                    MainDataRepository.unityID = configDTO.unityID;
-                    MainDataRepository.unityBlock = configDTO.unityBlock;
-                    MethodUtils.safeSetValue(mainDataRepository.urlGooglePlay,configDTO.unityBlock);
-                    mainDataRepository.minValue = (float) configDTO.minValue;
-                    mainDataRepository.maxValue = (float) configDTO.maxValue;
-                    mainDataRepository.yourRefferalBonus = configDTO.referalBonusToUser;
-                    mainDataRepository.otherRefferalBonus = configDTO.referalBonusForOthers;
-                    mainDataRepository.convertValueToOneUsdt = configDTO.convertValueToOneUsdt;
-                    mainDataRepository.widthdrawalDelay = configDTO.widthdrawalDelay;
-
-                    MethodUtils.safeSetValue(mainDataRepository.learningText,configDTO.learningText);
-                    MethodUtils.safeSetValue(mainDataRepository.refferalText1,configDTO.refferalText1);
-                    MethodUtils.safeSetValue(mainDataRepository.refferealText2,configDTO.refferealText2);
-                }
-                else {
-                    Log.d("network", "failure" + response.toString());
-                    getDefaultConfigData();
-                }
-            }
-
-            @Override
-            public void onFailure(Call<ConfigDTO> call, Throwable t) {
-                Log.d("network", "failure" + t.getMessage());
-                getDefaultConfigData();
-            }
-        });
-    }
-    private void getDefaultConfigData(){
-        ConfigService configService = retrofit.create(ConfigService.class);
-
-        Call<ConfigDTO> configResp = configService.getConfigDefault();
-        Log.d(TagUtils.MAINVIEWMODELTAG,"identifier " + MainDataRepository.geteDeviceIdentifier());
-        configResp.enqueue(new Callback<ConfigDTO>() {
-            @Override
-            public void onResponse(Call<ConfigDTO> call, Response<ConfigDTO> response) {
-                if (response.isSuccessful()) {
-                    Log.d("network", "PROBLEM");
-                    ConfigDTO configDTO = response.body();
-
-                    MainDataRepository.unityID = configDTO.unityID;
-                    MainDataRepository.unityBlock = configDTO.unityBlock;
-                    MethodUtils.safeSetValue(mainDataRepository.urlGooglePlay,configDTO.unityBlock);
-                    mainDataRepository.minValue = (float) configDTO.minValue;
-                    mainDataRepository.maxValue = (float) configDTO.maxValue;
-                    mainDataRepository.yourRefferalBonus = configDTO.referalBonusToUser;
-                    mainDataRepository.otherRefferalBonus = configDTO.referalBonusForOthers;
-                    mainDataRepository.convertValueToOneUsdt = configDTO.convertValueToOneUsdt;
-                    mainDataRepository.widthdrawalDelay = 100*1000;//Todo change back
-
-                    MethodUtils.safeSetValue(mainDataRepository.learningText,configDTO.learningText);
-                    MethodUtils.safeSetValue(mainDataRepository.refferalText1,configDTO.refferalText1);
-                    MethodUtils.safeSetValue(mainDataRepository.refferealText2,configDTO.refferealText2);
-                }
-                else {
-                    Log.d("network", "failure" + response.toString());
-                }
-            }
-
-            @Override
-            public void onFailure(Call<ConfigDTO> call, Throwable t) {
-                Log.d("network", "failure" + t.getMessage());
-            }
-        });
-    }
-
-    private void getYourCodeBonus(Integer diff, Integer toSave){
-        mainDataRepository.getRefferalOtherCodeBonus(diff);
-        mainDataRepository.referals = toSave;
-        saveUserData();
-    }
-
     private void setUpCooldown(long delay){
         if(userHasBeenJustCreated){
             mainDataRepository.tryRefreshCooldown(mainDataRepository.widthdrawalDelay);
@@ -433,12 +453,12 @@ public class MainViewModel extends ViewModel {
         }
         coins.setValue(temp);
     }
-    private void showToast(String text,Boolean hasSucceded){
-        MainActivity.Companion.setHasSucceded(hasSucceded);
-        MainActivity.Companion.getToastText().setValue(text);
-    }
 
     //util functions
+    public static void showToast(String text, Boolean hasSucceded){
+        MainActivity.Companion.setHasSucceded(hasSucceded);
+        MethodUtils.safeSetValue(MainActivity.Companion.getToastText(),text);
+    }
     public boolean isOnline(){
         return MainActivity.Companion.isOnline((Context) context);
     }

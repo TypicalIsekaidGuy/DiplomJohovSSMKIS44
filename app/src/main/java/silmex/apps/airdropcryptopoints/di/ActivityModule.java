@@ -24,9 +24,4 @@ public class ActivityModule {
     public static UnityAdsRepository provideUnityAdsRepository(@ActivityContext Context context){
         return new UnityAdsRepository(context);
     }
-    @ActivityScoped
-    @Provides
-    public static CallbackI provideCallbackI(HomeViewModel homeViewModel) {
-        return (CallbackI) homeViewModel;
-    }
 }

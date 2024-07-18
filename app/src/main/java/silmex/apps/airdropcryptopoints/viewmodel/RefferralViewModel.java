@@ -1,18 +1,29 @@
 package silmex.apps.airdropcryptopoints.viewmodel;
 
+import static androidx.core.content.ContextCompat.startActivity;
 import static silmex.apps.airdropcryptopoints.data.repository.MainDataRepository.fullTimerDuration;
+import static silmex.apps.airdropcryptopoints.viewmodel.MainViewModel.log;
 
 import android.annotation.SuppressLint;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
+import android.net.Uri;
+import android.provider.MediaStore;
 import android.util.Log;
 
+import androidx.core.content.FileProvider;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModel;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.Objects;
 
 import javax.inject.Inject;
@@ -24,8 +35,10 @@ import retrofit2.Callback;
 import retrofit2.Response;
 import retrofit2.Retrofit;
 import silmex.apps.airdropcryptopoints.MainActivity;
+import silmex.apps.airdropcryptopoints.R;
 import silmex.apps.airdropcryptopoints.data.db.AppDatabase;
 import silmex.apps.airdropcryptopoints.data.db.maindata.MainDataTable;
+import silmex.apps.airdropcryptopoints.data.model.CONNECTION_ERROR_ENUM;
 import silmex.apps.airdropcryptopoints.data.networkdata.dto.UserDTO;
 import silmex.apps.airdropcryptopoints.data.networkdata.response.ReferalsResponse;
 import silmex.apps.airdropcryptopoints.data.networkdata.response.UserResponse;
@@ -64,6 +77,7 @@ public class RefferralViewModel extends ViewModel {
         this.context = context;
         this.retrofit = retrofit;
         this.db = db;
+
         setUpObservers();
     }
 
@@ -127,10 +141,6 @@ public class RefferralViewModel extends ViewModel {
                 if(newValue!=0) {
 
                     updateProgress(newValue);
-
-                    if (newValue <= 500L) {
-                        onTimerEnd();
-                    }
                 }
             }
         });
@@ -176,8 +186,8 @@ public class RefferralViewModel extends ViewModel {
         Intent shareIntent = Intent.createChooser(sendIntent, null);
 
         MainActivity.Companion.getShareIntent().setValue(shareIntent);
-
     }
+
 
     public void copyCodeOnClick(){
 
@@ -221,7 +231,7 @@ public class RefferralViewModel extends ViewModel {
             }
         }
         else{
-            showToast("Turn on Internet", false);
+            MainViewModel.throwConnectionError(CONNECTION_ERROR_ENUM.GET_REFCODE_BONUS_CLICK);
         }
 
     }
@@ -229,6 +239,7 @@ public class RefferralViewModel extends ViewModel {
     //helper functions
     private void getOtherCodeBonus(boolean success){
         if (success) {
+            log("User entered another user's code and got bonus");
             mainDataRepository.getRefferalYourCodeBonus(1);
             saveUserData();
             showToast("Bonus added", true);
@@ -240,19 +251,16 @@ public class RefferralViewModel extends ViewModel {
 
 
     //presentation functions
-    public void onTimerEnd(){
-
-    }
-    public void showToast(String text,Boolean hasSucceded){
+    private void showToast(String text,Boolean hasSucceded){
         MainActivity.Companion.setHasSucceded(hasSucceded);
         MethodUtils.safeSetValue(MainActivity.Companion.getToastText(),text);
     }
-    public void updateProgress(Long estimatedTime){
+    private void updateProgress(Long estimatedTime){
         progress.setValue( ((float)estimatedTime/fullTimerDuration));
     }
 
     //util functions
-    public boolean isOnline(){
+    private boolean isOnline(){
         return MainActivity.Companion.isOnline(context);
     }
     private void saveUserData(){

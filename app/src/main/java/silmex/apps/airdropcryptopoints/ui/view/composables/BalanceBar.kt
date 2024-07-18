@@ -45,7 +45,7 @@ import silmex.apps.airdropcryptopoints.utils.IntegerUtils
 import silmex.apps.airdropcryptopoints.utils.StringUtils.getBalanceText
 
 @Composable
-fun BalanceBar(balance: Float,progress: Float, isFarming: Boolean, coins: List<Coin?>,currentMultiplier: Int, onRemove: (Int) -> Unit) {
+fun BalanceBar(claimedBalance: Float,balance: Float,progress: Float, isFarming: Boolean, coins: List<Coin?>,currentMultiplier: Int, onRemove: (Int) -> Unit) {
     var progress = 1-progress
     var alphaText by remember { mutableStateOf(0f) }
 
@@ -73,18 +73,18 @@ fun BalanceBar(balance: Float,progress: Float, isFarming: Boolean, coins: List<C
             1f
         } else almostAlpha0
     }
-    var finalColorPlus by remember { mutableStateOf(AlmostTransparent) }
+/*    var finalColorPlus by remember { mutableStateOf(AlmostTransparent) }
     val animatedColorPlus by animateColorAsState(
         targetValue = finalColorPlus,
         animationSpec = tween(durationMillis = 400)
     )
-    LaunchedEffect(balance) {
+    LaunchedEffect(claimedBalance) {
         if(balance.toInt() !=0){
             finalColorPlus = SideTextColor
             delay(300)
             finalColorPlus = AlmostTransparent
         }
-    }
+    }*/
     BoxWithConstraints(
         modifier = Modifier
             .fillMaxWidth()
@@ -92,6 +92,15 @@ fun BalanceBar(balance: Float,progress: Float, isFarming: Boolean, coins: List<C
             .background(if (isFarming) AltBG else MainBG, RoundedCornerShape(16.dp))
             .border(1.dp, FarmingProgressBG, RoundedCornerShape(16.dp))
     ) {
+
+        Box(modifier = Modifier.fillMaxWidth().padding(top = 4.dp)){
+            Text("Your balance", fontSize = big_text_size, color = MainTextColor, fontFamily = itimStyle, modifier = Modifier.padding(top = 16.dp).align(Alignment.TopCenter))
+            Image(
+                painter = painterResource(id = image),
+                contentDescription = "",
+                modifier = Modifier.size(64.dp).align(Alignment.CenterStart)
+            )
+        }
         Column(
             verticalArrangement = Arrangement.SpaceBetween,
             modifier = Modifier
@@ -99,20 +108,14 @@ fun BalanceBar(balance: Float,progress: Float, isFarming: Boolean, coins: List<C
                 .padding(8.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text("Your balance", fontSize = big_text_size, color = MainTextColor, fontFamily = itimStyle)
             Row(
                 Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Image(
-                    painter = painterResource(id = image),
-                    contentDescription = "",
-                    modifier = Modifier.size(64.dp)
-                )
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Spacer(modifier = Modifier.height(32.dp))
-                    Text("Crypto Points", fontSize = medium_text_size, color = SideTextColor, fontFamily = itimStyle)
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
+                    Spacer(modifier = Modifier.fillMaxHeight(0.6f))
+                    Text("Crypto Points", fontSize = medium_text_size, color = SideTextColor, fontFamily = itimStyle, modifier = Modifier.align(Alignment.CenterHorizontally))
                 }
                 Spacer(Modifier.width(48.dp))
             }
@@ -122,8 +125,10 @@ fun BalanceBar(balance: Float,progress: Float, isFarming: Boolean, coins: List<C
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier.align(Alignment.Center)
         ) {
+/*
             Text("+", fontSize = 48.sp, color = animatedColorPlus, fontFamily = itimStyle, modifier = Modifier)
-            Text(getBalanceText(balance), fontSize = 48.sp, color = SideTextColor, fontFamily = itimStyle, modifier = Modifier)
+*/
+            Text(getBalanceText(claimedBalance), fontSize = 48.sp, color = SideTextColor, fontFamily = itimStyle, modifier = Modifier)
             Spacer(Modifier.height(1.dp))
         }
         FallingCoins(coins,maxHeight.value,maxWidth.value,1f+currentMultiplier*0.01f, onRemove)
@@ -232,7 +237,7 @@ fun FallingCoin(modifier: Modifier, maxHeight: Float, maxWidth:Float, coin: Coin
     )
 }
 
-val almostAlpha0 = 0.000001f
+const val almostAlpha0 = 0.000001f
 
 data class Coin(
     var id: Integer,

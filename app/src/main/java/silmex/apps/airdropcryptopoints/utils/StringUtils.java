@@ -5,13 +5,17 @@ import static kotlin.random.RandomKt.Random;
 import android.os.Build;
 import android.util.Log;
 
+import java.text.NumberFormat;
+import java.util.Locale;
 import java.util.UUID;
 
 import silmex.apps.airdropcryptopoints.data.repository.MainDataRepository;
 
 public class StringUtils {
-    public static String getBalanceText(Float balance){
-        return ""+balance.intValue();
+    public static String getBalanceText(Float balance) {
+        NumberFormat formatter = NumberFormat.getInstance(Locale.US);
+        formatter.setGroupingUsed(true);
+        return formatter.format(balance).replace(","," ");
     }
 
     public static String generateDeviceIdentifier() {

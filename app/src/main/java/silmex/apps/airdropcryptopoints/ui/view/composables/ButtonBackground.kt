@@ -100,10 +100,10 @@ fun InActiveBackground(
         LaunchedEffect(true){
             while(true){
                 paddingValues = 12f
-                        paddingFontValues = 4f
+                        paddingFontValues = if(text.length>12) 8f else 4f
                     delay(600)
                 paddingValues = 0f
-                        paddingFontValues = 0f
+                        paddingFontValues =if(text.length>12) 4f else 0f
                     delay(600)
             }
         }
@@ -278,7 +278,7 @@ fun ActiveBackground(
 fun AnimatedNumbers(timeRemaining: Long) {
 
     val hours = ((timeRemaining/1000) / 3600).toInt()
-    val minutes = ((timeRemaining/1000) / 60).toInt()
+    val minutes = (((timeRemaining/1000) / 60)%60).toInt()
     val seconds = ((timeRemaining/1000) % 60).toInt()
 
     Column(
@@ -317,6 +317,8 @@ fun AnimatedSum(balance: Int) {
     val number4 = balance/10000 %10
     val number5 = balance/100000 %10
     val number6 = balance/1000000 %10
+    val number7 = balance/10000000 %10
+    val number8 = balance/100000000 %10
 
     LaunchedEffect(balance){
         Log.d("UITEST1",number1.toString())
@@ -327,22 +329,28 @@ fun AnimatedSum(balance: Int) {
     Column(
     ) {
         Row {
-            if(number6>0){
+            if(number8>0){
+                AnimatedTimeUnit(timeUnit = number8) // Units place of minutes
+            }
+            if(number8>0||number7>0){
+                AnimatedTimeUnit(timeUnit = number7) // Units place of minutes
+            }
+            if(number8>0||number7>0||number6>0){
                 AnimatedTimeUnit(timeUnit = number6) // Units place of minutes
             }
-            if(number6>0||number5>0){
+            if(number8>0||number7>0||number6>0||number5>0){
                 AnimatedTimeUnit(timeUnit = number5) // Units place of minutes
             }
-            if(number6>0||number5>0||number4>0){
+            if(number8>0||number7>0||number6>0||number5>0||number4>0){
                 AnimatedTimeUnit(timeUnit = number4) // Units place of minutes
             }
-            if(number6>0||number5>0||number4>0||number3>0){
+            if(number8>0||number7>0||number6>0||number5>0||number4>0||number3>0){
                 AnimatedTimeUnit(timeUnit = number3) // Units place of minutes
             }
-            if(number6>0||number5>0||number4>0||number3>0||number2>0){
+            if(number8>0||number7>0||number6>0||number5>0||number4>0||number3>0||number2>0){
                 AnimatedTimeUnit(timeUnit = number2) // Units place of minutes
             }
-            if(number6>0||number5>0||number4>0||number3>0||number2>0||number1>0){
+            if(number8>0||number7>0||number6>0||number5>0||number4>0||number3>0||number2>0||number1>0){
                 AnimatedTimeUnit(timeUnit = number1) // Units place of minutes
             }
             AnimatedTimeUnit(timeUnit = lastNumber) // Units place of seconds

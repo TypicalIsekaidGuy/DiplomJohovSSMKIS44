@@ -20,9 +20,11 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 import retrofit2.Retrofit;
+import silmex.apps.airdropcryptopoints.MainActivity;
 import silmex.apps.airdropcryptopoints.data.db.AppDatabase;
 import silmex.apps.airdropcryptopoints.data.db.maindata.MainDataTable;
 import silmex.apps.airdropcryptopoints.data.interfaces.UpgradeWheelCallBack;
+import silmex.apps.airdropcryptopoints.data.model.CONNECTION_ERROR_ENUM;
 import silmex.apps.airdropcryptopoints.data.model.MULTIPLYER_ENUM;
 import silmex.apps.airdropcryptopoints.data.networkdata.dto.UserDTO;
 import silmex.apps.airdropcryptopoints.data.networkdata.response.BoosterResponse;
@@ -31,6 +33,7 @@ import silmex.apps.airdropcryptopoints.data.repository.MainDataRepository;
 import silmex.apps.airdropcryptopoints.data.repository.UnityAdsRepository;
 import silmex.apps.airdropcryptopoints.network.MainService;
 import silmex.apps.airdropcryptopoints.utils.ConvertUtils;
+import silmex.apps.airdropcryptopoints.utils.MethodUtils;
 import silmex.apps.airdropcryptopoints.utils.StringUtils;
 import silmex.apps.airdropcryptopoints.utils.TagUtils;
 
@@ -62,7 +65,7 @@ public class HomeViewModel extends ViewModel implements UpgradeWheelCallBack {
         this.retrofit = retrofit;
         this.db = db;
 
-        unityAdsRepository.initializeUnity();
+        initializeUnity();
         setUpObservers();
     }
     private void setUpObservers(){
@@ -97,6 +100,15 @@ public class HomeViewModel extends ViewModel implements UpgradeWheelCallBack {
                 }
             }
         });
+    }
+
+    public void initializeUnity(){
+        if(isOnline()){
+            unityAdsRepository.initializeUnity();
+        }
+        else{
+            MainViewModel.throwConnectionError(CONNECTION_ERROR_ENUM.UNITY_INITIALIZATION);
+        }
     }
 
     //presentation functions
@@ -143,12 +155,21 @@ public class HomeViewModel extends ViewModel implements UpgradeWheelCallBack {
 
     //onClick functions
     public void upgradeWheelClick(){
-        unityAdsRepository.showUnityAds();
+        if (isOnline()) {
+            unityAdsRepository.showUnityAds();
+        } else {
+            MainViewModel.throwConnectionError(CONNECTION_ERROR_ENUM.UPGRADE_WHEEL_CLICK);
+        }
     }
     public void claimClick(){
-        mainDataRepository.setTimer();
-        mainDataRepository.claimBalance();
-        saveUserData();
+        if(isOnline()){
+            mainDataRepository.setTimer();
+            mainDataRepository.claimBalance();
+            saveUserData();
+        }
+        else{
+            MainViewModel.throwConnectionError(CONNECTION_ERROR_ENUM.CLAIM_CLICK);
+        }
     }
     //helper functions
     private   void _upgradeWheel(){
@@ -240,5 +261,10 @@ public class HomeViewModel extends ViewModel implements UpgradeWheelCallBack {
     @Override
     public void upgradeWheel() {
         _upgradeWheel();
+    }
+
+    //util functions
+    public boolean isOnline(){
+        return MainActivity.Companion.isOnline((Context) context);
     }
 }

@@ -20,6 +20,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.StrokeCap
@@ -29,6 +30,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import silmex.apps.airdropcryptopoints.R
+import silmex.apps.airdropcryptopoints.data.model.CONNECTION_ERROR_ENUM
 import silmex.apps.airdropcryptopoints.ui.theme.AltBG
 import silmex.apps.airdropcryptopoints.ui.theme.FarmingProgressBG
 import silmex.apps.airdropcryptopoints.ui.theme.MainTextColor
@@ -37,15 +39,30 @@ import silmex.apps.airdropcryptopoints.ui.theme.WhiteText
 import silmex.apps.airdropcryptopoints.ui.theme.big_text_size
 import silmex.apps.airdropcryptopoints.ui.theme.itimStyle
 import silmex.apps.airdropcryptopoints.ui.theme.medium_text_size
+import silmex.apps.airdropcryptopoints.viewmodel.MainViewModel
 
 @Composable
-fun SplashScreen(afterDelayFun: ()->Unit){
-    Box(Modifier.fillMaxSize().background(color = AltBG)){
+fun SplashScreen(mainViewModel: MainViewModel,afterDelayFun: ()->Unit){
+    val errorEnum by MainViewModel.connectionErrorEnum.observeAsState()
+    val hadConnectionError by MainViewModel.hadConnectionError.observeAsState()
+
+    LaunchedEffect(hadConnectionError) {
+        if(hadConnectionError==true&&errorEnum==CONNECTION_ERROR_ENUM.LOAD_ALL_DATA_STARTUP){
+            mainViewModel.loadAllData()
+        }
+    }
+
+    Box(
+        Modifier
+            .fillMaxSize()
+            .background(color = AltBG)){
         Column(verticalArrangement = Arrangement.SpaceBetween, horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier
             .fillMaxHeight(0.7f)
             .fillMaxWidth(0.8f)
             .align(Alignment.Center)) {
-            Image(painter = painterResource(id = R.drawable.airdrop_icon), contentDescription = "", modifier = Modifier.size(256.dp).align(Alignment.CenterHorizontally))
+            Image(painter = painterResource(id = R.drawable.airdrop_icon), contentDescription = "", modifier = Modifier
+                .size(256.dp)
+                .align(Alignment.CenterHorizontally))
             Text("AirDrop Crypto Points", fontFamily = itimStyle, fontSize = big_text_size,color = MainTextColor)
             InfiniteLoadingAnimation()
             LaunchedEffect(key1 = true) {

@@ -29,6 +29,10 @@ public class MainDataTable {
     public float balance;
 
     @NotNull
+    @ColumnInfo(name = "claimed_balance")
+    public float claimed_balance;
+
+    @NotNull
     @ColumnInfo(name = "current_chosen_multipliyer_value")
     public int currentChosenMultipliyerValue;
     @NotNull
@@ -67,6 +71,13 @@ public class MainDataTable {
         catch (Exception e){
             Log.d("Error","Here");
             balance = 0;
+        }
+        try {
+            claimed_balance = mdr.claimedBalance.getValue();
+        }
+        catch (Exception e){
+            Log.d("Error","Here");
+            claimed_balance = 0;
         }
         try {
             currentChosenMultipliyerValue = mdr.currentChosenMultipliyer.getValue().getValue();
@@ -109,6 +120,7 @@ public class MainDataTable {
         this.random_save_id = IntegerUtils.generateRandomInteger();
         didShowLearning = false;
         balance = 0F;
+        claimed_balance = 0F;
         currentChosenMultipliyerValue = 1;
         isActive = false;
         can_withdraw = false;
@@ -122,6 +134,7 @@ public class MainDataTable {
         this.random_save_id = random_save_id;
         didShowLearning = false;
         balance = 0F;
+        claimed_balance = 0F;
         currentChosenMultipliyerValue = 1;
         isActive = false;
         can_withdraw = false;
@@ -130,10 +143,11 @@ public class MainDataTable {
         this.cooldown_estimated_end_time = 0;
         this.referals = 0;
     }
-    public MainDataTable(int random_save_id,boolean didShowLearning, float balance, int currentChosenMultipliyerValue, boolean isActive,boolean can_withdraw, long exit_time, long estimated_end_time,long cooldown_estimated_end_time, int referals){
+    public MainDataTable(int random_save_id,boolean didShowLearning, float balance,float claimed_balance, int currentChosenMultipliyerValue, boolean isActive,boolean can_withdraw, long exit_time, long estimated_end_time,long cooldown_estimated_end_time, int referals){
         this.random_save_id = random_save_id;
         this.didShowLearning = didShowLearning;
         this.balance = balance;
+        this.claimed_balance = claimed_balance;
         this.currentChosenMultipliyerValue = currentChosenMultipliyerValue;
         this.isActive = isActive;
         this.can_withdraw = can_withdraw;

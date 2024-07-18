@@ -39,6 +39,7 @@ import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import silmex.apps.airdropcryptopoints.R
+import silmex.apps.airdropcryptopoints.data.model.CONNECTION_ERROR_ENUM
 import silmex.apps.airdropcryptopoints.data.model.MULTIPLYER_ENUM
 import silmex.apps.airdropcryptopoints.ui.theme.AltBG
 import silmex.apps.airdropcryptopoints.ui.theme.MainBG
@@ -56,14 +57,23 @@ import silmex.apps.airdropcryptopoints.viewmodel.MainViewModel
 fun HomeScreen(viewModel: HomeViewModel,mainViewModel: MainViewModel, onLaunch: ()->Unit){
     val currentBoost = viewModel.currentChosenMultipliyer.observeAsState()
     val balance by viewModel.balance.observeAsState()
+    val claimedBalance by mainViewModel.claimedBalance.observeAsState()
     val isMining by viewModel.isMining.observeAsState()
     val isMiningLD = viewModel.isMining
     val leftTime by viewModel.leftTime.observeAsState()
     val progress by viewModel.progress.observeAsState()
     val coins by mainViewModel.coins.observeAsState()
+    val hadConnectionError by MainViewModel.hadConnectionError.observeAsState()
+    val connectionErrorEnum by MainViewModel.connectionErrorEnum.observeAsState()
 
     LaunchedEffect(true) {
         onLaunch()
+    }
+
+    LaunchedEffect(hadConnectionError) {
+        if(hadConnectionError!!&&connectionErrorEnum==CONNECTION_ERROR_ENUM.UNITY_INITIALIZATION){
+            viewModel.initializeUnity();
+        }
     }
 
     Column(
@@ -71,7 +81,7 @@ fun HomeScreen(viewModel: HomeViewModel,mainViewModel: MainViewModel, onLaunch: 
             .fillMaxWidth()
             .padding(horizontal = 16.dp)
             .padding(top = 32.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        BalanceBar(balance!!,progress!!, isMining!!,coins!!,currentBoost.value!!.value, mainViewModel::removeCoin)
+        BalanceBar(claimedBalance!!,balance!!,progress!!, isMining!!,coins!!,currentBoost.value!!.value, mainViewModel::removeCoin)
         UpgradeWheel(isMiningLD, currentBoost) { viewModel.upgradeWheelClick() }
         ClaimButton(currentBoost!!.value!!.value,balance!!,
             progress!!,leftTime!!,isMining!!,!isMining!!,!isMining!!, {
@@ -106,7 +116,7 @@ fun UpgradeWheel(isActive: MutableLiveData<Boolean>, currentBoost: State<MULTIPL
 
             }
         }
-        LaunchedEffect(currentBoost.value) {
+        LaunchedEffect(currentBoost.value, isActive.value) {
             if(isActive.value!!){
                 if(currentBoost.value!=MULTIPLYER_ENUM.MULTYPLIER_1x){
 

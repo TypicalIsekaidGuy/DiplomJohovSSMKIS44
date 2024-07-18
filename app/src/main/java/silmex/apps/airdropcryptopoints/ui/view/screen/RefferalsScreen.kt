@@ -76,6 +76,7 @@ fun RefferalsScreen(viewModel: RefferralViewModel,mainViewModel: MainViewModel, 
     val progress by viewModel.progress.observeAsState()
     val limitOfCode = viewModel.limitOfCode
     val currentBoost by mainViewModel.currentChosenMultipliyer.observeAsState()
+    val claimedBalance by mainViewModel.claimedBalance.observeAsState()
 
     LaunchedEffect(true) {
         onLaunch()
@@ -86,17 +87,23 @@ fun RefferalsScreen(viewModel: RefferralViewModel,mainViewModel: MainViewModel, 
             .fillMaxWidth()
             .padding(horizontal = 16.dp)
             .padding(top = 32.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        BalanceBar(balance!!,progress!!, isMining!!,coins!!,currentBoost!!.value!!, mainViewModel::removeCoin)
+        BalanceBar(claimedBalance!!,balance!!,progress!!, isMining!!,coins!!,currentBoost!!.value!!, mainViewModel::removeCoin)
         InviteRefferalTextBlock(refText1!!)
         CopyCodeBlock(code.value!!,{
                            viewModel.shareCodeOnClick()
         },{
             viewModel.copyCodeOnClick()
         })
-        EnterRefferalTextBlock()
         InputRefferalBlock(limitOfCode,textValue) {
             viewModel.getBonusFromCodeOnClick()
         }
+        Image(
+            painter = painterResource(id = R.drawable.refferral_illustration),
+            contentDescription = "",
+            modifier = Modifier.align(
+                Alignment.CenterHorizontally
+            ).fillMaxWidth().size(128.dp)
+        )
     }
 }
 
@@ -178,12 +185,6 @@ fun CopyCodeBlock(code:Int,onClick1:()->Unit,onClick2: () -> Unit){
         }
     })
 }
-@Composable
-fun EnterRefferalTextBlock(){
-    Text("Enter my referral code (insert referral code here) and receive “n” crypto points in the “Name” application (link to application)", fontSize = average_text_size, color = MainTextColor, fontFamily = itimStyle, textAlign = TextAlign.Center)
-
-}
-
 
 @Composable
 fun InputRefferalBlock(limitOfCode: Int,textValue: MutableLiveData<String>, onClick:()->Unit){

@@ -6,7 +6,9 @@ import android.content.Intent
 import android.content.res.Resources
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
+import android.net.Uri
 import android.os.Bundle
+import android.os.StrictMode
 import android.telephony.TelephonyManager
 import android.util.Log
 import android.view.View
@@ -65,8 +67,27 @@ class MainActivity : ComponentActivity() {
     fun setUpObservers(){
 
         shareIntent.observeForever { shareIntent ->
-            if (shareIntent != null)
+            if (shareIntent != null){
+                /*                shareIntent.putExtra(
+                                    Intent.EXTRA_STREAM,
+                                    Uri.parse("android.resource://" + this.packageName + "/drawable/" + "banner")
+                                )*/
                 startActivity(shareIntent)
+            }
+        }
+
+        link.observeForever { link ->
+            try{
+                val openURL = Intent(android.content.Intent.ACTION_VIEW)
+                openURL.data = Uri.parse(link)
+                Log.d("VIEWMODELTEST",link)
+                startActivity(openURL)
+            }
+            catch (e: Exception){
+                val openURL = Intent(android.content.Intent.ACTION_VIEW)
+                openURL.data = Uri.parse("https://t.me/finsignal")
+                startActivity(openURL)
+            }
         }
 
         toastText.observeForever { toastText ->
@@ -124,6 +145,8 @@ class MainActivity : ComponentActivity() {
         var isOnPaused = MutableLiveData<Boolean>(false)
 
         var shareIntent = MutableLiveData<Intent>();
+
+        var link = MutableLiveData<String>();
 
         var toastText: MutableLiveData<String> = MutableLiveData<String>();
 

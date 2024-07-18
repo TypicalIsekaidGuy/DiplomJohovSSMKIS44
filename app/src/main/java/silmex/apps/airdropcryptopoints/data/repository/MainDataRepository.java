@@ -53,6 +53,7 @@ public class MainDataRepository {
     //main data vars
     public MutableLiveData<Boolean> didShowLearning = new MutableLiveData<Boolean>(false);
     public MutableLiveData<Float> balance = new MutableLiveData<Float>(0F);
+    public MutableLiveData<Float> claimedBalance = new MutableLiveData<Float>(0F);
     public MutableLiveData<MULTIPLYER_ENUM> currentChosenMultipliyer = new MutableLiveData<MULTIPLYER_ENUM>(MULTIPLYER_ENUM.MULTYPLIER_1x);
     public MutableLiveData<Boolean> isActive = new MutableLiveData<>(false);
     public Date serverTime = null;
@@ -94,7 +95,7 @@ public class MainDataRepository {
     //timer vars
     public CountDownTimer mainTimer;
     public CountDownTimer withdrawalCooldownTimer;
-    public static final long fullTimerDuration = 14400000/60;//TODO change to 14400000
+    public static final long fullTimerDuration = 14400000/*/60*3*/;//TODO change to 14400000
     public MutableLiveData<Long> millisUntilFinishedLiveData = new MutableLiveData<>(0L);
     public MutableLiveData<Long> cooldownmillisUntilFinishedLiveData = new MutableLiveData<>(0L);
     public long tempLeftTime = 0;
@@ -151,9 +152,6 @@ public class MainDataRepository {
 
     public void refreshCooldown(long estimatedEndTime){
         Log.d("Repo","refreshed");
-            if(estimatedEndTime>=widthdrawalDelay){
-                resetBalance();
-            }
             MethodUtils.safeSetValue(canWithdraw,false);
             withdrawalCooldownTimer = new CountDownTimer(estimatedEndTime, 1000) {
                 public void onTick(long millisUntilFinished) {
@@ -188,16 +186,18 @@ public class MainDataRepository {
     }
 
     public void getRefferalYourCodeBonus(Integer diff){
-        balance.postValue(balance.getValue()+(yourRefferalBonus*diff));
+        MethodUtils.safeSetValue(claimedBalance,claimedBalance.getValue()+(yourRefferalBonus*diff));
     }
     public void getRefferalOtherCodeBonus(Integer diff){
-        balance.postValue(balance.getValue()+(otherRefferalBonus*diff));
+        MethodUtils.safeSetValue(claimedBalance,claimedBalance.getValue()+(otherRefferalBonus*diff));
     }
     public void claimBalance(){
         MethodUtils.safeSetValue(currentChosenMultipliyer,MULTIPLYER_ENUM.MULTYPLIER_1x);
+        MethodUtils.safeSetValue(claimedBalance,claimedBalance.getValue()+balance.getValue());
+        MethodUtils.safeSetValue(balance,0f);
     }
     public void resetBalance(){
-        MethodUtils.safeSetValue(balance,0f);
+        MethodUtils.safeSetValue(claimedBalance,0f);
     }
     public Float getBalanceForWithdrawal(){
         int crypto_points = Objects.requireNonNull(balance.getValue()).intValue();
@@ -225,6 +225,7 @@ public class MainDataRepository {
         MethodUtils.safeSetValue(balance,mdt.balance);
     }
     public void updateMainDataRepo(MainDataTable mdt, Date serverTime){
+        MethodUtils.safeSetValue(claimedBalance,mdt.claimed_balance);
         this.serverTime = serverTime;
         if(mdt.isActive){
             tempLeftTime  = (serverTime.getTime() - mdt.exit_time)/1000L;

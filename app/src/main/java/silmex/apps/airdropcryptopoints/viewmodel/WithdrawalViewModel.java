@@ -39,6 +39,7 @@ import retrofit2.Retrofit;
 import silmex.apps.airdropcryptopoints.MainActivity;
 import silmex.apps.airdropcryptopoints.data.db.AppDatabase;
 import silmex.apps.airdropcryptopoints.data.db.maindata.MainDataTable;
+import silmex.apps.airdropcryptopoints.data.model.CONNECTION_ERROR_ENUM;
 import silmex.apps.airdropcryptopoints.data.model.MULTIPLYER_ENUM;
 import silmex.apps.airdropcryptopoints.data.model.Transaction;
 import silmex.apps.airdropcryptopoints.data.networkdata.dto.TransactionDTO;
@@ -82,6 +83,7 @@ public class WithdrawalViewModel extends ViewModel {
         getTransaction();
         setUpObservers();
     }
+
     private void setUpObservers(){
         mainDataRepository.currentChosenMultipliyer.observeForever(new Observer<MULTIPLYER_ENUM>() {
             @Override
@@ -127,7 +129,6 @@ public class WithdrawalViewModel extends ViewModel {
         });
     }
 
-
     //presentation functions
     public void onTimerEnd(){
 
@@ -140,55 +141,59 @@ public class WithdrawalViewModel extends ViewModel {
         progress.setValue( ((float)estimatedTime/fullTimerDuration));
     }
 
-
-
     //onClick functions
     public void withdrawalOnClick(){
-        if(!isMining.getValue()){
-            if(mainDataRepository.canWithdraw.getValue()!=null&&mainDataRepository.canWithdraw.getValue()){
-                WithdrawalService serviceTrans = RetrofitClient.getClient().create(WithdrawalService.class);
-                Float bucks = mainDataRepository.getBalanceForWithdrawal();
-                if(bucks!=null){
+        if(isOnline()){
+            if(!isMining.getValue()){
+                if(mainDataRepository.canWithdraw.getValue()!=null&&mainDataRepository.canWithdraw.getValue()){
+                    WithdrawalService serviceTrans = RetrofitClient.getClient().create(WithdrawalService.class);
+                    Float bucks = mainDataRepository.getBalanceForWithdrawal();
+                    if(bucks!=null){
 
-                    Call<CreateTransactionResponse> created = serviceTrans.createTransaction(StringUtils.generateDeviceIdentifier(), bucks,"Generated from mobile app = " +MainActivity.Companion.getSource(),MainActivity.Companion.getSource());
-                    created.enqueue(new Callback<CreateTransactionResponse>() {
-                        @Override
-                        public void onResponse(@NonNull Call<CreateTransactionResponse> call, @NonNull Response<CreateTransactionResponse> response) {
-                            if (response.isSuccessful()) {
-                                CreateTransactionResponse transResponse = response.body();
-                                if (transResponse != null) {
-                                    if(transResponse.success==1){
+                        Call<CreateTransactionResponse> created = serviceTrans.createTransaction(StringUtils.generateDeviceIdentifier(), bucks,"Generated from mobile app = " +MainActivity.Companion.getSource(),MainActivity.Companion.getSource());
+                        created.enqueue(new Callback<CreateTransactionResponse>() {
+                            @Override
+                            public void onResponse(@NonNull Call<CreateTransactionResponse> call, @NonNull Response<CreateTransactionResponse> response) {
+                                if (response.isSuccessful()) {
+                                    CreateTransactionResponse transResponse = response.body();
+                                    if (transResponse != null) {
+                                        if(transResponse.success==1){
 
-                                        MainViewModel.log("User made withdrawal for: "+bucks);
-                                        mainDataRepository.refreshCooldown(mainDataRepository.widthdrawalDelay);
-                                        saveUserData();
-                                        getTransaction();
-                                        Log.d("VIEWMODELTESTS",""+mainDataRepository.transactionList.getValue().size());
-                                        Log.d("VIEWMODELTESTS",""+transactionList.getValue().size());
+                                            MainViewModel.log("User made withdrawal for: "+bucks);
+                                            mainDataRepository.resetBalance();
+                                            mainDataRepository.refreshCooldown(mainDataRepository.widthdrawalDelay);
+                                            saveUserData();
+                                            getTransaction();
+                                            Log.d("VIEWMODELTESTS",""+mainDataRepository.transactionList.getValue().size());
+                                            Log.d("VIEWMODELTESTS",""+transactionList.getValue().size());
+
+                                        }
+                                    }
+                                    else{
 
                                     }
+                                } else {
+                                    Log.d("network", "failure" + response.toString());
                                 }
-                                else{
-
-                                }
-                            } else {
-                                Log.d("network", "failure" + response.toString());
                             }
-                        }
 
-                        @Override
-                        public void onFailure(Call<CreateTransactionResponse> call, Throwable t) {
-                            Log.d("network", "failure" + t.getMessage());
-                        }
-                    });
+                            @Override
+                            public void onFailure(Call<CreateTransactionResponse> call, Throwable t) {
+                                Log.d("network", "failure" + t.getMessage());
+                            }
+                        });
+                    }
+                }
+                else{
+                    showToast("You need to wait around a day",false);
                 }
             }
             else{
-                showToast("Cooldown: "+ mainDataRepository.cooldownmillisUntilFinishedLiveData.getValue(),false);
+                showToast("Don't forget to claim your points when the timer ends",false);
             }
         }
         else{
-            showToast("Don't forget to claim your points when the timer ends",false);
+            MainViewModel.throwConnectionError(CONNECTION_ERROR_ENUM.WITHDRAWAL_CLICK);
         }
 
     }
@@ -202,45 +207,55 @@ public class WithdrawalViewModel extends ViewModel {
 
     }
 
+    public void googlePlayCodeOnClick(){
+        if(mainDataRepository.urlGooglePlay.getValue()!=null){
+            MainActivity.Companion.getLink().setValue(mainDataRepository.urlGooglePlay.getValue());
+        }
+    }
+
     //helper functions
 
-    private void getTransaction() {
-        Call<TransactionResponse> transResp = retrofit.create(WithdrawalService.class).getTransactions(StringUtils.generateDeviceIdentifier());
+    public void getTransaction() {
+        if(isOnline()){
+            Call<TransactionResponse> transResp = retrofit.create(WithdrawalService.class).getTransactions(StringUtils.generateDeviceIdentifier());
+            transResp.enqueue(new Callback<TransactionResponse>() {
+                @Override
+                public void onResponse(@NonNull Call<TransactionResponse> call, @NonNull Response<TransactionResponse> response) {
+                    if (response.isSuccessful()) {
+                        TransactionResponse transResponse = response.body();
 
-        transResp.enqueue(new Callback<TransactionResponse>() {
-            @Override
-            public void onResponse(@NonNull Call<TransactionResponse> call, @NonNull Response<TransactionResponse> response) {
-                if (response.isSuccessful()) {
-                    TransactionResponse transResponse = response.body();
+                        if (transResponse.moneyList != null) {
 
-                    if (transResponse.moneyList != null) {
-
-                        List<Transaction> replaceList = new ArrayList<>();
-                        for (TransactionDTO trans : transResponse.moneyList) {
-                            if(Objects.equals(trans.source, MainActivity.Companion.getSource())){
-                                replaceList.add(new Transaction(trans));
+                            List<Transaction> replaceList = new ArrayList<>();
+                            for (TransactionDTO trans : transResponse.moneyList) {
+                                if(Objects.equals(trans.source, MainActivity.Companion.getSource())){
+                                    replaceList.add(new Transaction(trans));
+                                }
                             }
+
+                            Collections.sort(replaceList);
+                            Collections.reverse(replaceList);
+                            mainDataRepository.transactionList.setValue(replaceList);
+                            transactionList.setValue(replaceList);
+
                         }
-
-                        Collections.sort(replaceList);
-                        Collections.reverse(replaceList);
-                        mainDataRepository.transactionList.setValue(replaceList);
-                        transactionList.setValue(replaceList);
-
+                        else{
+                            Log.d("network","Problem");
+                        }
+                    } else {
+                        Log.d("network", "failure" + response.toString());
                     }
-                    else{
-                        Log.d("network","Problem");
-                    }
-                } else {
-                    Log.d("network", "failure" + response.toString());
                 }
-            }
 
-            @Override
-            public void onFailure(Call<TransactionResponse> call, Throwable t) {
-                Log.d("network", "failure" + t.getMessage());
-            }
-        });
+                @Override
+                public void onFailure(Call<TransactionResponse> call, Throwable t) {
+                    Log.d("network", "failure" + t.getMessage());
+                }
+            });
+        }
+        else{
+            MainViewModel.throwConnectionError(CONNECTION_ERROR_ENUM.WITHDRAWAL_FETCHING_STARTUP);
+        }
     }
 
     private void saveUserData(){
@@ -272,5 +287,11 @@ public class WithdrawalViewModel extends ViewModel {
                 Log.d("network", "failure" + t.getMessage());
             }
         });
+    }
+
+
+    //util functions
+    public boolean isOnline(){
+        return MainActivity.Companion.isOnline((Context) context);
     }
 }
