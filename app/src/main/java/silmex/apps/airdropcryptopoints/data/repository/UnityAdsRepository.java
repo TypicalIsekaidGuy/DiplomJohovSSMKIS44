@@ -24,7 +24,6 @@ public class UnityAdsRepository implements IUnityAdsInitializationListener {
 
     public UnityAdsRepository(Context context){
         activity = (Activity) context;
-        this.callBack = callBack;
     }
 
     // <editor-fold desc="UnityAds">

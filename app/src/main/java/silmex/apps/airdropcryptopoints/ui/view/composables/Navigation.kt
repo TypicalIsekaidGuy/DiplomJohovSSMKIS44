@@ -14,13 +14,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import silmex.apps.airdropcryptopoints.data.interfaces.UpgradeWheelCallBack
-import silmex.apps.airdropcryptopoints.data.model.CONNECTION_ERROR_ENUM
+import silmex.apps.airdropcryptopoints.data.model.enums.CONNECTION_ERROR_ENUM
 import silmex.apps.airdropcryptopoints.data.model.Screen
 import silmex.apps.airdropcryptopoints.data.repository.UnityAdsRepository
 import silmex.apps.airdropcryptopoints.ui.theme.MainBG
@@ -38,7 +35,6 @@ import silmex.apps.airdropcryptopoints.viewmodel.HomeViewModel
 import silmex.apps.airdropcryptopoints.viewmodel.MainViewModel
 import silmex.apps.airdropcryptopoints.viewmodel.RefferralViewModel
 import silmex.apps.airdropcryptopoints.viewmodel.WithdrawalViewModel
-import java.lang.reflect.Method
 
 @Composable
 fun Navigation(mainViewModel: MainViewModel) {

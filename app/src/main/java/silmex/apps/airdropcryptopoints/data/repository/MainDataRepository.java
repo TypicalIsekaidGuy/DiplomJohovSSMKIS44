@@ -1,6 +1,5 @@
 package silmex.apps.airdropcryptopoints.data.repository;
 
-import android.icu.util.Calendar;
 import android.os.Build;
 import android.os.CountDownTimer;
 import android.os.Handler;
@@ -9,46 +8,32 @@ import android.util.Log;
 
 import androidx.lifecycle.MutableLiveData;
 
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import silmex.apps.airdropcryptopoints.data.db.maindata.MainDataTable;
-import silmex.apps.airdropcryptopoints.data.model.MULTIPLYER_ENUM;
+import silmex.apps.airdropcryptopoints.data.model.enums.MULTIPLYER_ENUM;
 import silmex.apps.airdropcryptopoints.data.model.Transaction;
-import silmex.apps.airdropcryptopoints.utils.ConvertUtils;
 import silmex.apps.airdropcryptopoints.utils.IntegerUtils;
 import silmex.apps.airdropcryptopoints.utils.MethodUtils;
-import silmex.apps.airdropcryptopoints.utils.StringUtils;
 import silmex.apps.airdropcryptopoints.utils.TagUtils;
 
 public class MainDataRepository {
 
+    //constructor
+    public MainDataRepository(){
+
+    }
+
+
     //vars for configing app
-    public static Integer random_for_save = null;
+    public static MutableLiveData<Integer> random_for_save = new MutableLiveData<>(null);
+    public static Integer tempRandom = null;
     public static String unityID = "5457496";
     public static String unityBlock = "Rewarded_Android";
-
-    public static String geteDeviceIdentifier() {
-        String uniqueDevicePseudoID = "97" +            Build.BOARD.length() % 10 +
-                Build.BRAND.length() % 10 +            Build.DEVICE.length() % 10 +
-                Build.DISPLAY.length() % 10 +            Build.HOST.length() % 10 +
-                Build.ID.length() % 10 +            Build.MANUFACTURER.length() % 10 +
-                Build.MODEL.length() % 10 +            Build.PRODUCT.length() % 10 +
-                Build.TAGS.length() % 10 +            Build.TYPE.length() % 10 +
-                Build.USER.length() % 10+ random_for_save;
-        String serial = Build.getRadioVersion();
-        Log.d("workkk", new UUID(uniqueDevicePseudoID.hashCode(), serial.hashCode()).toString());
-        return new UUID(uniqueDevicePseudoID.hashCode(), serial.hashCode()).toString();
-    }
 
     //main data vars
     public MutableLiveData<Boolean> didShowLearning = new MutableLiveData<Boolean>(false);
@@ -58,38 +43,32 @@ public class MainDataRepository {
     public MutableLiveData<Boolean> isActive = new MutableLiveData<>(false);
     public Date serverTime = null;
 
+
     //referral data vars
     public MutableLiveData<Integer> referralCode = new MutableLiveData<Integer>(Math.abs(IntegerUtils.generateRandomInteger()));
-    public String enteredCode = "";
-    public Integer yourRefferalBonus = 1000000;
-    public Integer otherRefferalBonus = 1000000;
-    public Integer referals = 0;
+    public MutableLiveData<String> enteredCode = new MutableLiveData<>("");
+    public MutableLiveData<Integer> yourRefferalBonus = new MutableLiveData<>(1000000);
+    public MutableLiveData<Integer> otherRefferalBonus =  new MutableLiveData<>(1000000);
+    public MutableLiveData<Integer> referals = new MutableLiveData<>(0);
     public boolean hasNotEnteredCode(){
-        return enteredCode.isEmpty();
+        return enteredCode.getValue().isEmpty();
     }
 
+
     //withdrawal data vars
-    public final List<Date> withdrawDates = new ArrayList<Date>() {{
-        Calendar calendar = Calendar.getInstance();
-        calendar.set(Calendar.DAY_OF_MONTH, 1);
-        add(calendar.getTime());
-        calendar.set(Calendar.DAY_OF_MONTH, 15);
-        add(calendar.getTime());
-    }};
     public MutableLiveData<List<Transaction>> transactionList = new MutableLiveData<List<Transaction>>(new ArrayList<Transaction>());
     public MutableLiveData<String> urlGooglePlay = new MutableLiveData<>("https://t.me/finsignal");
     public float minValue =0.01f;
     public float maxValue =49.74f;
     public int convertValueToOneUsdt =198000;
-    public long widthdrawalDelay =86400000;
-
+    public long widthdrawalDelay =100*1000;//Todo change to 86400000
     public MutableLiveData<Boolean> canWithdraw =new MutableLiveData<>(false);
+
 
     //presentation vars
     public MutableLiveData<String> learningText = new MutableLiveData<String>("Invite friends and get \n1 000 000 Crypto Points");
     public MutableLiveData<String> refferalText1 = new MutableLiveData<String>("Invite friends and receive 1 000 000 crypto points, each invited friend will receive 1 000 000 crypto points");
     public MutableLiveData<String> refferealText2 = new MutableLiveData<String>("Enter my referral code #CODE# and receive 1 000 000 crypto points in the AirDrop Crypto Points application - #LINK#");
-
 
 
     //timer vars
@@ -99,6 +78,8 @@ public class MainDataRepository {
     public MutableLiveData<Long> millisUntilFinishedLiveData = new MutableLiveData<>(0L);
     public MutableLiveData<Long> cooldownmillisUntilFinishedLiveData = new MutableLiveData<>(0L);
     public long tempLeftTime = 0;
+
+
 
     //main vars setters
     //timer setters
@@ -151,7 +132,7 @@ public class MainDataRepository {
     }
 
     public void refreshCooldown(long estimatedEndTime){
-        Log.d("Repo","refreshed");
+        Log.d("Repo","refreshed "+estimatedEndTime);
             MethodUtils.safeSetValue(canWithdraw,false);
             withdrawalCooldownTimer = new CountDownTimer(estimatedEndTime, 1000) {
                 public void onTick(long millisUntilFinished) {
@@ -177,25 +158,37 @@ public class MainDataRepository {
     }
 
     public void tryRefreshCooldown(long estimatedTime){
-        new Handler(Looper.getMainLooper()).post(new Runnable() {
-            @Override
-            public void run() {
-                refreshCooldown(estimatedTime);
-            }
-        });
+        Log.d("Repo","tried to refreshed ");
+        new Handler(Looper.getMainLooper()).post(() -> refreshCooldown(estimatedTime));
     }
 
-    public void getRefferalYourCodeBonus(Integer diff){
-        MethodUtils.safeSetValue(claimedBalance,claimedBalance.getValue()+(yourRefferalBonus*diff));
-    }
-    public void getRefferalOtherCodeBonus(Integer diff){
-        MethodUtils.safeSetValue(claimedBalance,claimedBalance.getValue()+(otherRefferalBonus*diff));
-    }
+    //home setters
     public void claimBalance(){
         MethodUtils.safeSetValue(currentChosenMultipliyer,MULTIPLYER_ENUM.MULTYPLIER_1x);
         MethodUtils.safeSetValue(claimedBalance,claimedBalance.getValue()+balance.getValue());
         MethodUtils.safeSetValue(balance,0f);
     }
+
+    //refferral setters
+    public void getRefferalYourCodeBonus(Integer diff){
+        if(yourRefferalBonus.getValue()!=null){
+            MethodUtils.safeSetValue(claimedBalance,claimedBalance.getValue()+(yourRefferalBonus.getValue()*diff));
+        }
+        else{
+            MethodUtils.safeSetValue(claimedBalance,claimedBalance.getValue()+(1000000*diff));
+        }
+        MethodUtils.safeSetValue(enteredCode,"plug");
+    }
+    public void getRefferalOtherCodeBonus(Integer diff){
+        if(otherRefferalBonus.getValue()!=null){
+            MethodUtils.safeSetValue(claimedBalance,claimedBalance.getValue()+(otherRefferalBonus.getValue()*diff));
+        }
+        else{
+            MethodUtils.safeSetValue(claimedBalance,claimedBalance.getValue()+(1000000*diff));
+        }
+    }
+
+    //withdrawal setters
     public void resetBalance(){
         MethodUtils.safeSetValue(claimedBalance,0f);
     }
@@ -205,26 +198,24 @@ public class MainDataRepository {
         if(bucks<minValue){
             return minValue;
         }
-        if(bucks>maxValue){
-            return maxValue;
-        }
-        return bucks;
-    }
-    //constructor
-    public MainDataRepository(){
-
+        return Math.min(bucks, maxValue);
     }
 
+    //update when loading app
     public void updateMainDataRepo(MainDataTable mdt, Long currentTime){
-        random_for_save = mdt.random_save_id;
+        MethodUtils.safeSetValue(random_for_save,mdt.random_save_id);
+        MethodUtils.safeSetValue(referals,mdt.referals);
+        tempRandom = mdt.random_save_id;
         Log.d(TagUtils.MAINVIEWMODELTAG,"Worked db");
 
         MethodUtils.safeSetValue(didShowLearning,mdt.didShowLearning);
         MethodUtils.safeSetValue(currentChosenMultipliyer,MULTIPLYER_ENUM.getEnumValue(mdt.currentChosenMultipliyerValue));
         MethodUtils.safeSetValue(isActive,mdt.isActive);
         MethodUtils.safeSetValue(balance,mdt.balance);
+        MethodUtils.safeSetValue(claimedBalance,mdt.claimed_balance);
     }
     public void updateMainDataRepo(MainDataTable mdt, Date serverTime){
+        MethodUtils.safeSetValue(referals,mdt.referals);
         MethodUtils.safeSetValue(claimedBalance,mdt.claimed_balance);
         this.serverTime = serverTime;
         if(mdt.isActive){
@@ -263,6 +254,7 @@ public class MainDataRepository {
         if(Boolean.FALSE.equals(canWithdraw.getValue())||mdt.cooldown_estimated_end_time==0){
             long temp  = (serverTime.getTime() - mdt.exit_time);
             if(temp-mdt.cooldown_estimated_end_time<=0){
+                Log.d("Repo111","fired off" +(mdt.cooldown_estimated_end_time-temp));
                 tryRefreshCooldown(mdt.cooldown_estimated_end_time-temp);
             }
             else{

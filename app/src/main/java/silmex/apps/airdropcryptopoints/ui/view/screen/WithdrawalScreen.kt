@@ -39,7 +39,6 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.ClipboardManager
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -49,7 +48,7 @@ import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import silmex.apps.airdropcryptopoints.R
-import silmex.apps.airdropcryptopoints.data.model.CONNECTION_ERROR_ENUM
+import silmex.apps.airdropcryptopoints.data.model.enums.CONNECTION_ERROR_ENUM
 import silmex.apps.airdropcryptopoints.data.model.Transaction
 import silmex.apps.airdropcryptopoints.ui.theme.AlmostTransparent
 import silmex.apps.airdropcryptopoints.ui.theme.AltBG

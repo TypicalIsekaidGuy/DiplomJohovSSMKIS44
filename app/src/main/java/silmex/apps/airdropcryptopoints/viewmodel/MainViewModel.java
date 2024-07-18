@@ -8,20 +8,17 @@ import android.content.Context;
 import android.os.CountDownTimer;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
 import androidx.lifecycle.MutableLiveData;
-import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModel;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Random;
-import java.util.Timer;
-import java.util.TimerTask;
 
 import javax.inject.Inject;
 
-import dagger.Provides;
 import dagger.hilt.android.lifecycle.HiltViewModel;
 import dagger.hilt.android.qualifiers.ApplicationContext;
 import retrofit2.Call;
@@ -32,8 +29,8 @@ import silmex.apps.airdropcryptopoints.MainActivity;
 import silmex.apps.airdropcryptopoints.data.db.AppDatabase;
 import silmex.apps.airdropcryptopoints.data.db.maindata.MainDataDao;
 import silmex.apps.airdropcryptopoints.data.db.maindata.MainDataTable;
-import silmex.apps.airdropcryptopoints.data.model.CONNECTION_ERROR_ENUM;
-import silmex.apps.airdropcryptopoints.data.model.MULTIPLYER_ENUM;
+import silmex.apps.airdropcryptopoints.data.model.enums.CONNECTION_ERROR_ENUM;
+import silmex.apps.airdropcryptopoints.data.model.enums.MULTIPLYER_ENUM;
 import silmex.apps.airdropcryptopoints.data.networkdata.dto.ConfigDTO;
 import silmex.apps.airdropcryptopoints.data.networkdata.dto.UserDTO;
 import silmex.apps.airdropcryptopoints.data.networkdata.response.LogResponse;
@@ -70,7 +67,7 @@ public class MainViewModel extends ViewModel {
     //presentation vars
     public MutableLiveData<List<Coin>> coins = new MutableLiveData<>(new ArrayList<>());
 
-    public MutableLiveData<Float> balance = new MutableLiveData<Float>(0f);
+    public MutableLiveData<Float> balance = new MutableLiveData<>(0f);
 
     public MutableLiveData<Float> claimedBalance = new MutableLiveData<Float>(0f);
 
@@ -103,56 +100,52 @@ public class MainViewModel extends ViewModel {
 
     //main functions
     private void setUpObservers(){
-        mainDataRepository.balance.observeForever(new Observer<Float>() {
-            @Override
-            public void onChanged(Float newValue) {
-                if(mainDataRepository.balance.getValue()-balance.getValue()==0||mainDataRepository.balance.getValue()-balance.getValue()>56){
-                    balance.postValue(newValue);
-                }
-                else{
-                    saveUserData();
-                }
+        mainDataRepository.balance.observeForever(newValue -> {
+            if(mainDataRepository.balance.getValue()-balance.getValue()==0||mainDataRepository.balance.getValue()-balance.getValue()>56){
+                balance.postValue(newValue);
             }
         });
-        mainDataRepository.claimedBalance.observeForever(new Observer<Float>() {
-            @Override
-            public void onChanged(Float newValue) {
-                MethodUtils.safeSetValue(claimedBalance,newValue);
-                saveUserData();
-            }
-        });
-        mainDataRepository.currentChosenMultipliyer.observeForever(new Observer<MULTIPLYER_ENUM>() {
-            @Override
-            public void onChanged(MULTIPLYER_ENUM newValue) {
-                updateTimer(newValue);
-            }
-        });
-        mainDataRepository.didShowLearning.observeForever(new Observer<Boolean>() {
-            @Override
-            public void onChanged(Boolean newValue) {
-                didShowLearningScreen.setValue(newValue);
-            }
-        });
+
+        mainDataRepository.claimedBalance.observeForever(newValue -> MethodUtils.safeSetValue(claimedBalance,newValue));
+
+        mainDataRepository.currentChosenMultipliyer.observeForever(this::updateTimer);
+
+        mainDataRepository.didShowLearning.observeForever(newValue -> didShowLearningScreen.setValue(newValue));
     }
-    //buisness logic
 
     public void loadAllData(){
         MainDataDao md = db.mainDataDao();
         AppDatabase.databaseWriteExecutor.execute(() -> {
 
             MainDataTable mdt = md.get();
-            if(mdt==null){
+            if(mdt==null||mdt.random_save_id==0){
                 long exitTime = System.currentTimeMillis();
-                MainDataRepository.random_for_save = IntegerUtils.generateRandomInteger();
-                md.insert(new MainDataTable(MainDataRepository.random_for_save,exitTime));
-                userHasBeenJustCreated = true;
-                log("User with id"+StringUtils.generateDeviceIdentifier()+" created");
+                if(MainDataRepository.random_for_save.getValue()==null&&MainDataRepository.tempRandom==null){
+
+                    int rand = IntegerUtils.generateRandomInteger();
+                    MethodUtils.safeSetValue(MainDataRepository.random_for_save,rand);
+                    MainDataRepository.tempRandom = rand;
+                    md.insert(new MainDataTable(rand,exitTime));
+                    userHasBeenJustCreated = true;
+                    Log.d("usercreated",""+userHasBeenJustCreated);
+                    log("User with id"+StringUtils.generateDeviceIdentifier(rand)+" created");
+                }
+                else if(MainDataRepository.tempRandom!=null){
+                    MethodUtils.safeSetValue(MainDataRepository.random_for_save,MainDataRepository.tempRandom);
+                    md.insert(new MainDataTable(MainDataRepository.tempRandom,exitTime));
+                    userHasBeenJustCreated = true;
+                    log("User with id"+StringUtils.generateDeviceIdentifier(MainDataRepository.tempRandom)+" created");
+                }
             }
             else{
+                Log.d("APPDBTEST","referal"+mdt.referals);
+                Log.d("APPDBTEST","random_id"+mdt.random_save_id);
+                Log.d("APPDBTEST","claimed_balance"+mdt.claimed_balance);
+                Log.d("APPDBTEST","exit_time"+mdt.exit_time);
                 mainDataRepository.updateMainDataRepo(mdt, System.currentTimeMillis());
-                log("User with id"+StringUtils.generateDeviceIdentifier()+" got in OnCreate");
+                Log.d("Testots of random",""+mdt.random_save_id);
+                log("User with id"+StringUtils.generateDeviceIdentifier(mdt.random_save_id)+" got in OnCreate");
             }
-
 
             loadNetworkData();
         });
@@ -160,6 +153,7 @@ public class MainViewModel extends ViewModel {
 
     private void loadNetworkData(){
         if(isOnline()){
+            Log.d(TagUtils.MAINVIEWMODELTAG+"identify1","identifier " + StringUtils.generateDeviceIdentifier());
             getConfigData();
             getUserData();
         }
@@ -169,24 +163,28 @@ public class MainViewModel extends ViewModel {
         }
     }
 
-
     public void saveUserData(){
 
         MainService mainService = retrofit.create(MainService.class);
 
-        Call<UserResponse> userResp = mainService.getUser(MainDataRepository.geteDeviceIdentifier());
+        Call<UserResponse> userResp = mainService.getUser(StringUtils.generateDeviceIdentifier());
         userResp.enqueue(new Callback<UserResponse>() {
             @Override
-            public void onResponse(Call<UserResponse> call, Response<UserResponse> response) {
+            public void onResponse(@NonNull Call<UserResponse> call, @NonNull Response<UserResponse> response) {
                 if (response.isSuccessful()) {
                     Log.d("network", "PROBLEM");
                     UserResponse userResponse = response.body();
+                    assert userResponse != null;
                     UserDTO user = userResponse.users.get(0);
 
                     AppDatabase.databaseWriteExecutor.execute(() -> {
                         MainDataTable mdt = new MainDataTable(mainDataRepository,ConvertUtils.stringToDate(user.serverTime).getTime());
                         db.mainDataDao().update(mdt);
-                        Log.d("Balance",user.serverTime);
+                        Log.d("networkTESTSdb2", String.valueOf(mdt.referals));
+                        Log.d(TagUtils.MAINVIEWMODELTAG,user.serverTime);
+                        Log.d(TagUtils.MAINVIEWMODELTAG, String.valueOf(mainDataRepository.referals.getValue()));
+                        Log.d(TagUtils.MAINVIEWMODELTAG, String.valueOf(mainDataRepository.balance.getValue()));
+                        Log.d(TagUtils.MAINVIEWMODELTAG, String.valueOf(mainDataRepository.enteredCode.getValue()));
                     });
                 }
                 else {
@@ -195,27 +193,40 @@ public class MainViewModel extends ViewModel {
             }
 
             @Override
-            public void onFailure(Call<UserResponse> call, Throwable t) {
+            public void onFailure(@NonNull Call<UserResponse> call, @NonNull Throwable t) {
                 Log.d("network", "failure" + t.getMessage());
             }
         });
     }
 
     public void updateShowLearning(){
+        Log.d("REPO!!","withdraw "+mainDataRepository.cooldownmillisUntilFinishedLiveData.getValue());
         MainDataDao md = db.mainDataDao();
         AppDatabase.databaseWriteExecutor.execute(() -> {
 
             MainDataTable mdt = md.get();
             MethodUtils.safeSetValue(mainDataRepository.didShowLearning,true);
             MethodUtils.safeSetValue(didShowLearningScreen,true);
-            if(mdt==null){
+            if(mdt==null||mdt.random_save_id==0){
                 long exitTime = System.currentTimeMillis();
-                MainDataRepository.random_for_save = IntegerUtils.generateRandomInteger();
-                md.insert(new MainDataTable(MainDataRepository.random_for_save,exitTime));
-                userHasBeenJustCreated = true;
-                log("User with id"+StringUtils.generateDeviceIdentifier()+" created");
+                if(MainDataRepository.random_for_save.getValue()==null&&MainDataRepository.tempRandom==null){
+
+                    int rand = IntegerUtils.generateRandomInteger();
+                    MethodUtils.safeSetValue(MainDataRepository.random_for_save,rand);
+                    MainDataRepository.tempRandom = rand;
+                    md.insert(new MainDataTable(rand,exitTime));
+                    userHasBeenJustCreated = true;
+                    log("User with id"+StringUtils.generateDeviceIdentifier(rand)+" created");
+                }
+                else if(MainDataRepository.tempRandom!=null){
+                    MethodUtils.safeSetValue(MainDataRepository.random_for_save,MainDataRepository.tempRandom);
+                    md.insert(new MainDataTable(MainDataRepository.tempRandom,exitTime));
+                    userHasBeenJustCreated = true;
+                    log("User with id"+StringUtils.generateDeviceIdentifier(MainDataRepository.tempRandom)+" created");
+                }
             }
             else{
+                Log.d("networkTESTSdb3", String.valueOf(mdt.referals));
                 MainDataTable new_mdt = new MainDataTable(mdt.random_save_id,true,mdt.balance,mdt.claimed_balance,mdt.currentChosenMultipliyerValue,mdt.isActive,mdt.isActive,mdt.exit_time,mdt.estimated_end_time,mdt.cooldown_estimated_end_time, mdt.referals);
                 md.update(new_mdt);
             }
@@ -232,23 +243,23 @@ public class MainViewModel extends ViewModel {
     //helper functions
     private void getConfigData(){
         ConfigService configService = retrofit.create(ConfigService.class);
-
         Call<ConfigDTO> configResp = configService.getConfig(MainActivity.Companion.getLocale((Application) context));
-        Log.d(TagUtils.MAINVIEWMODELTAG,"identifier " + MainDataRepository.geteDeviceIdentifier());
+        Log.d(TagUtils.MAINVIEWMODELTAG,"identifier " + StringUtils.generateDeviceIdentifier());
         configResp.enqueue(new Callback<ConfigDTO>() {
             @Override
-            public void onResponse(Call<ConfigDTO> call, Response<ConfigDTO> response) {
+            public void onResponse(@NonNull Call<ConfigDTO> call, @NonNull Response<ConfigDTO> response) {
                 if (response.isSuccessful()) {
                     Log.d("network", "PROBLEM");
                     ConfigDTO configDTO = response.body();
 
+                    assert configDTO != null;
                     MainDataRepository.unityID = configDTO.unityID;
                     MainDataRepository.unityBlock = configDTO.unityBlock;
                     MethodUtils.safeSetValue(mainDataRepository.urlGooglePlay,configDTO.partnerURL);
                     mainDataRepository.minValue = (float) configDTO.minValue;
                     mainDataRepository.maxValue = (float) configDTO.maxValue;
-                    mainDataRepository.yourRefferalBonus = configDTO.referalBonusToUser;
-                    mainDataRepository.otherRefferalBonus = configDTO.referalBonusForOthers;
+                    MethodUtils.safeSetValue(mainDataRepository.yourRefferalBonus,configDTO.referalBonusToUser);
+                    MethodUtils.safeSetValue(mainDataRepository.otherRefferalBonus,configDTO.referalBonusForOthers);
                     mainDataRepository.convertValueToOneUsdt = configDTO.convertValueToOneUsdt;
                     mainDataRepository.widthdrawalDelay = configDTO.widthdrawalDelay;
 
@@ -263,7 +274,7 @@ public class MainViewModel extends ViewModel {
             }
 
             @Override
-            public void onFailure(Call<ConfigDTO> call, Throwable t) {
+            public void onFailure(@NonNull Call<ConfigDTO> call, @NonNull Throwable t) {
                 Log.d("network", "failure" + t.getMessage());
                 getDefaultConfigData();
             }
@@ -273,21 +284,22 @@ public class MainViewModel extends ViewModel {
         ConfigService configService = retrofit.create(ConfigService.class);
 
         Call<ConfigDTO> configResp = configService.getConfigDefault();
-        Log.d(TagUtils.MAINVIEWMODELTAG,"identifier " + MainDataRepository.geteDeviceIdentifier());
+        Log.d(TagUtils.MAINVIEWMODELTAG,"identifier " + StringUtils.generateDeviceIdentifier());
         configResp.enqueue(new Callback<ConfigDTO>() {
             @Override
-            public void onResponse(Call<ConfigDTO> call, Response<ConfigDTO> response) {
+            public void onResponse(@NonNull Call<ConfigDTO> call, @NonNull Response<ConfigDTO> response) {
                 if (response.isSuccessful()) {
                     Log.d("network", "PROBLEM");
                     ConfigDTO configDTO = response.body();
 
+                    assert configDTO != null;
                     MainDataRepository.unityID = configDTO.unityID;
                     MainDataRepository.unityBlock = configDTO.unityBlock;
                     MethodUtils.safeSetValue(mainDataRepository.urlGooglePlay,configDTO.partnerURL);
                     mainDataRepository.minValue = (float) configDTO.minValue;
                     mainDataRepository.maxValue = (float) configDTO.maxValue;
-                    mainDataRepository.yourRefferalBonus = configDTO.referalBonusToUser;
-                    mainDataRepository.otherRefferalBonus = configDTO.referalBonusForOthers;
+                    MethodUtils.safeSetValue(mainDataRepository.yourRefferalBonus,configDTO.referalBonusToUser);
+                    MethodUtils.safeSetValue(mainDataRepository.otherRefferalBonus,configDTO.referalBonusForOthers);
                     mainDataRepository.convertValueToOneUsdt = configDTO.convertValueToOneUsdt;
                     mainDataRepository.widthdrawalDelay = 100*1000;//Todo change back
 
@@ -301,7 +313,7 @@ public class MainViewModel extends ViewModel {
             }
 
             @Override
-            public void onFailure(Call<ConfigDTO> call, Throwable t) {
+            public void onFailure(@NonNull Call<ConfigDTO> call, @NonNull Throwable t) {
                 Log.d("network", "failure" + t.getMessage());
             }
         });
@@ -310,26 +322,28 @@ public class MainViewModel extends ViewModel {
         showToast("Congratulations, you received 1m crypto points!",true);
         log("User got his code entered by another user and received bonus");
         mainDataRepository.getRefferalOtherCodeBonus(diff);
-        mainDataRepository.referals = toSave;
+        MethodUtils.safeSetValue(mainDataRepository.referals,toSave);
         saveUserData();
     }
     private void getUserData(){
         MainService mainService = retrofit.create(MainService.class);
 
-        Call<UserResponse> userResp = mainService.getUser(MainDataRepository.geteDeviceIdentifier());
-        Log.d(TagUtils.MAINVIEWMODELTAG,"identifier " + MainDataRepository.geteDeviceIdentifier());
+        Log.d("Testots of random2",""+MainDataRepository.random_for_save.getValue());
+        Call<UserResponse> userResp = mainService.getUser(StringUtils.generateDeviceIdentifier());
+        Log.d(TagUtils.MAINVIEWMODELTAG+"identify2","identifier " + StringUtils.generateDeviceIdentifier());
         userResp.enqueue(new Callback<UserResponse>() {
             @Override
-            public void onResponse(Call<UserResponse> call, Response<UserResponse> response) {
+            public void onResponse(@NonNull Call<UserResponse> call, @NonNull Response<UserResponse> response) {
                 if (response.isSuccessful()) {
                     Log.d("network", "PROBLEM");
                     UserResponse userResponse = response.body();
+                    assert userResponse != null;
                     UserDTO user = userResponse.users.get(0);
 
                     Log.d(TagUtils.MAINVIEWMODELTAG,"ref code " + user.refCode);
 
                     MethodUtils.safeSetValue(mainDataRepository.referralCode, user.refCode);
-                    mainDataRepository.enteredCode = user.enteredCode;
+                    MethodUtils.safeSetValue(mainDataRepository.enteredCode,user.enteredCode);
 
                     AppDatabase.databaseWriteExecutor.execute(() -> {
                         MainDataTable mdt = db.mainDataDao().get();
@@ -339,7 +353,11 @@ public class MainViewModel extends ViewModel {
                         Log.d("networkTESTS",""+user.enteredCode);
                         Log.d("networkTESTS",""+user.id);
                         Log.d("networkTESTS",""+user.referals);
-                        mainDataRepository.updateMainDataRepo(mdt,ConvertUtils.stringToDate(user.serverTime));// TODO before this method ther eis a save somewhere, needs to be removed
+                        Log.d("networkTESTSdb4","referal"+mdt.referals);
+                        Log.d("networkTESTSdb4","random_id"+mdt.random_save_id);
+                        Log.d("networkTESTSdb4","claimed_balance"+mdt.claimed_balance);
+                        Log.d("networkTESTSdb4","exit_time"+mdt.exit_time);
+                        mainDataRepository.updateMainDataRepo(mdt,ConvertUtils.stringToDate(user.serverTime));
                         if(user.referals>mdt.referals){
                             getYourCodeBonus(user.referals-mdt.referals, user.referals);
                         }
@@ -352,14 +370,18 @@ public class MainViewModel extends ViewModel {
             }
 
             @Override
-            public void onFailure(Call<UserResponse> call, Throwable t) {
+            public void onFailure(@NonNull Call<UserResponse> call, @NonNull Throwable t) {
                 Log.d("network", "failure" + t.getMessage());
             }
         });
     }
     private void setUpCooldown(long delay){
+        Log.d("usercreated",""+userHasBeenJustCreated);
         if(userHasBeenJustCreated){
             mainDataRepository.tryRefreshCooldown(mainDataRepository.widthdrawalDelay);
+        }
+        else{
+            mainDataRepository.tryRefreshCooldown(delay);
         }
     }
 
@@ -367,11 +389,11 @@ public class MainViewModel extends ViewModel {
     //presentation functions
     private void setUpPresentationVars(){
         for(int i = 0; i<500; i++){
-            coins.getValue().add(null);
+            Objects.requireNonNull(coins.getValue()).add(null);
         }
     }
     private void addCoin(){
-        if(Boolean.TRUE.equals(mainDataRepository.isActive.getValue())&&coins.getValue().size()==500){
+        if(Boolean.TRUE.equals(mainDataRepository.isActive.getValue())&& Objects.requireNonNull(coins.getValue()).size()==500){
 
             if(coins.getValue()!=null){
                 if(coins.getValue().get(0)==null)
@@ -444,6 +466,7 @@ public class MainViewModel extends ViewModel {
     public void emptyCoinList(){
         List<Coin> temp = coins.getValue();
         for(int i = 0; i<500; i++){
+            assert temp != null;
             if(temp.get(i)==null){
                 break;
             }
@@ -462,16 +485,16 @@ public class MainViewModel extends ViewModel {
     public boolean isOnline(){
         return MainActivity.Companion.isOnline((Context) context);
     }
-
     public static void log(String message){
-
+        Log.d(TagUtils.MAINVIEWMODELTAG,message);
         LogService service = RetrofitClient.getClient().create(LogService.class);
-        Call<LogResponse> log_call = service.log(MainDataRepository.geteDeviceIdentifier(),message,MainActivity.Companion.getSource());
+        Call<LogResponse> log_call = service.log(StringUtils.generateDeviceIdentifier(),message,MainActivity.Companion.getSource());
         log_call.enqueue(new Callback<LogResponse>() {
             @Override
-            public void onResponse(Call<LogResponse> call, Response<LogResponse> response) {
+            public void onResponse(@NonNull Call<LogResponse> call, @NonNull Response<LogResponse> response) {
                 if (response.isSuccessful()) {
                     LogResponse adsResponse = response.body();
+                    assert adsResponse != null;
                     if(adsResponse.success==1){
                         Log.d("network","got it right"+adsResponse.message);
                     }
@@ -484,7 +507,7 @@ public class MainViewModel extends ViewModel {
             }
 
             @Override
-            public void onFailure(Call<LogResponse> call, Throwable t) {
+            public void onFailure(@NonNull Call<LogResponse> call, @NonNull Throwable t) {
                 Log.d("network", "failure" + t.getMessage());
             }
         });

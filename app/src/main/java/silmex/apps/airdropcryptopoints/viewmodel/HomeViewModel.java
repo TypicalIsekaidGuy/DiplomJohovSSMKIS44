@@ -6,8 +6,8 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
 import androidx.lifecycle.MutableLiveData;
-import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModel;
 
 import java.util.Objects;
@@ -24,8 +24,8 @@ import silmex.apps.airdropcryptopoints.MainActivity;
 import silmex.apps.airdropcryptopoints.data.db.AppDatabase;
 import silmex.apps.airdropcryptopoints.data.db.maindata.MainDataTable;
 import silmex.apps.airdropcryptopoints.data.interfaces.UpgradeWheelCallBack;
-import silmex.apps.airdropcryptopoints.data.model.CONNECTION_ERROR_ENUM;
-import silmex.apps.airdropcryptopoints.data.model.MULTIPLYER_ENUM;
+import silmex.apps.airdropcryptopoints.data.model.enums.CONNECTION_ERROR_ENUM;
+import silmex.apps.airdropcryptopoints.data.model.enums.MULTIPLYER_ENUM;
 import silmex.apps.airdropcryptopoints.data.networkdata.dto.UserDTO;
 import silmex.apps.airdropcryptopoints.data.networkdata.response.BoosterResponse;
 import silmex.apps.airdropcryptopoints.data.networkdata.response.UserResponse;
@@ -33,7 +33,6 @@ import silmex.apps.airdropcryptopoints.data.repository.MainDataRepository;
 import silmex.apps.airdropcryptopoints.data.repository.UnityAdsRepository;
 import silmex.apps.airdropcryptopoints.network.MainService;
 import silmex.apps.airdropcryptopoints.utils.ConvertUtils;
-import silmex.apps.airdropcryptopoints.utils.MethodUtils;
 import silmex.apps.airdropcryptopoints.utils.StringUtils;
 import silmex.apps.airdropcryptopoints.utils.TagUtils;
 
@@ -55,8 +54,8 @@ public class HomeViewModel extends ViewModel implements UpgradeWheelCallBack {
     public MutableLiveData<Boolean> isMining = new MutableLiveData<>(false);
 
     //presentation vars
-    public MutableLiveData<Long> leftTime = new MutableLiveData<Long>(0L);
-    public MutableLiveData<Float> progress = new MutableLiveData<Float>(0f);
+    public MutableLiveData<Long> leftTime = new MutableLiveData<>(0L);
+    public MutableLiveData<Float> progress = new MutableLiveData<>(0f);
 
     @Inject
     HomeViewModel(@ApplicationContext Context context, MainDataRepository mainDataRepository, Retrofit retrofit, AppDatabase db){
@@ -68,35 +67,24 @@ public class HomeViewModel extends ViewModel implements UpgradeWheelCallBack {
         initializeUnity();
         setUpObservers();
     }
+
+    //main functions
     private void setUpObservers(){
-        mainDataRepository.currentChosenMultipliyer.observeForever(new Observer<MULTIPLYER_ENUM>() {
-            @Override
-            public void onChanged(MULTIPLYER_ENUM newValue) {
+        mainDataRepository.currentChosenMultipliyer.observeForever(newValue -> currentChosenMultipliyer.postValue(newValue));
 
-                currentChosenMultipliyer.postValue(newValue);
-            }
-        });
         mainDataRepository.balance.observeForever(newValue -> balance.postValue(newValue));
-        mainDataRepository.isActive.observeForever(new Observer<Boolean>() {
-            @Override
-            public void onChanged(Boolean newValue) {
 
-                isMining.postValue(newValue);
-            }
-        });
+        mainDataRepository.isActive.observeForever(newValue -> isMining.postValue(newValue));
 
-        mainDataRepository.millisUntilFinishedLiveData.observeForever(new Observer<Long>() {
-            @Override
-            public void onChanged(Long newValue) {
-                if(newValue!=0) {
+        mainDataRepository.millisUntilFinishedLiveData.observeForever(newValue -> {
+            if(newValue!=0) {
 
-                    leftTime.setValue(newValue);
+                leftTime.setValue(newValue);
 
-                    updateProgress(newValue);
+                updateProgress(newValue);
 
-                    if (newValue <= 500L) {
-                        onTimerEnd();
-                    }
+                if (newValue <= 500L) {
+                    onTimerEnd();
                 }
             }
         });
@@ -111,27 +99,18 @@ public class HomeViewModel extends ViewModel implements UpgradeWheelCallBack {
         }
     }
 
-    //presentation functions
-    public void onTimerEnd(){
-        progress.setValue(0f);
-    }
-
-    // main functions
-    private void updateProgress(Long estimatedTime){
-        progress.setValue( ((float)estimatedTime/fullTimerDuration));
-    }
-
     private void saveUserData(){
 
         MainService mainService = retrofit.create(MainService.class);
 
-        Call<UserResponse> userResp = mainService.getUser(MainDataRepository.geteDeviceIdentifier());
+        Call<UserResponse> userResp = mainService.getUser(StringUtils.generateDeviceIdentifier());
         userResp.enqueue(new Callback<UserResponse>() {
             @Override
-            public void onResponse(Call<UserResponse> call, Response<UserResponse> response) {
+            public void onResponse(@NonNull Call<UserResponse> call, @NonNull Response<UserResponse> response) {
                 if (response.isSuccessful()) {
                     Log.d("network", "PROBLEM");
                     UserResponse userResponse = response.body();
+                    assert userResponse != null;
                     UserDTO user = userResponse.users.get(0);
 
                     AppDatabase.databaseWriteExecutor.execute(() -> {
@@ -141,17 +120,24 @@ public class HomeViewModel extends ViewModel implements UpgradeWheelCallBack {
                     });
                 }
                 else {
-                    Log.d("network", "failure" + response.toString());
+                    Log.d("network", "failure" + response);
                 }
             }
 
             @Override
-            public void onFailure(Call<UserResponse> call, Throwable t) {
+            public void onFailure(@NonNull Call<UserResponse> call, @NonNull Throwable t) {
                 Log.d("network", "failure" + t.getMessage());
             }
         });
     }
 
+    //presentation functions
+    public void onTimerEnd(){
+        progress.setValue(0f);
+    }
+    private void updateProgress(Long estimatedTime){
+        progress.setValue( ((float)estimatedTime/fullTimerDuration));
+    }
 
     //onClick functions
     public void upgradeWheelClick(){
@@ -171,6 +157,7 @@ public class HomeViewModel extends ViewModel implements UpgradeWheelCallBack {
             MainViewModel.throwConnectionError(CONNECTION_ERROR_ENUM.CLAIM_CLICK);
         }
     }
+
     //helper functions
     private   void _upgradeWheel(){
         Log.d(TagUtils.MAINVIEWMODELTAG,"callback called");
@@ -235,24 +222,25 @@ public class HomeViewModel extends ViewModel implements UpgradeWheelCallBack {
     private void updateBoostInServer(){
         MainService mainService = retrofit.create(MainService.class);
 
-        Call<BoosterResponse> bosterResp = mainService.updateBooster(MainDataRepository.geteDeviceIdentifier());
+        Call<BoosterResponse> bosterResp = mainService.updateBooster(StringUtils.generateDeviceIdentifier());
         bosterResp.enqueue(new Callback<BoosterResponse>() {
             @Override
-            public void onResponse(Call<BoosterResponse> call, Response<BoosterResponse> response) {
+            public void onResponse(@NonNull Call<BoosterResponse> call, @NonNull Response<BoosterResponse> response) {
                 if (response.isSuccessful()) {
                     Log.d("network", "PROBLEM");
                     BoosterResponse bosterResp = response.body();
+                    assert bosterResp != null;
                     if(bosterResp.success==1){
                         Log.d(TagUtils.MAINVIEWMODELTAG,"Booster upgdraded successfully");
                     }
                 }
                 else {
-                    Log.d("network", "failure" + response.toString());
+                    Log.d("network", "failure" + response);
                 }
             }
 
             @Override
-            public void onFailure(Call<BoosterResponse> call, Throwable t) {
+            public void onFailure(@NonNull Call<BoosterResponse> call, @NonNull Throwable t) {
                 Log.d("network", "failure" + t.getMessage());
             }
         });

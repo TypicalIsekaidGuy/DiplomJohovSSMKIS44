@@ -60,7 +60,9 @@ class MainActivity : ComponentActivity() {
         super.onPause()
         isOnPaused.value = true
 
-        mainViewModel.saveUserData()
+        if(MainViewModel.hasLoadedAd.value!!){
+            mainViewModel.saveUserData()
+        }
     }
 
 

@@ -39,8 +39,8 @@ import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import silmex.apps.airdropcryptopoints.R
-import silmex.apps.airdropcryptopoints.data.model.CONNECTION_ERROR_ENUM
-import silmex.apps.airdropcryptopoints.data.model.MULTIPLYER_ENUM
+import silmex.apps.airdropcryptopoints.data.model.enums.CONNECTION_ERROR_ENUM
+import silmex.apps.airdropcryptopoints.data.model.enums.MULTIPLYER_ENUM
 import silmex.apps.airdropcryptopoints.ui.theme.AltBG
 import silmex.apps.airdropcryptopoints.ui.theme.MainBG
 import silmex.apps.airdropcryptopoints.ui.theme.MainTextColor
@@ -71,7 +71,7 @@ fun HomeScreen(viewModel: HomeViewModel,mainViewModel: MainViewModel, onLaunch: 
     }
 
     LaunchedEffect(hadConnectionError) {
-        if(hadConnectionError!!&&connectionErrorEnum==CONNECTION_ERROR_ENUM.UNITY_INITIALIZATION){
+        if(hadConnectionError!!&&connectionErrorEnum== CONNECTION_ERROR_ENUM.UNITY_INITIALIZATION){
             viewModel.initializeUnity();
         }
     }
@@ -118,7 +118,7 @@ fun UpgradeWheel(isActive: MutableLiveData<Boolean>, currentBoost: State<MULTIPL
         }
         LaunchedEffect(currentBoost.value, isActive.value) {
             if(isActive.value!!){
-                if(currentBoost.value!=MULTIPLYER_ENUM.MULTYPLIER_1x){
+                if(currentBoost.value!= MULTIPLYER_ENUM.MULTYPLIER_1x){
 
                     while(true){
                         paddingValues1 = 4f
@@ -127,7 +127,7 @@ fun UpgradeWheel(isActive: MutableLiveData<Boolean>, currentBoost: State<MULTIPL
                         delay(600)
                     }
                 }
-                else if(currentBoost.value==MULTIPLYER_ENUM.MULTYPLIER_55x){
+                else if(currentBoost.value== MULTIPLYER_ENUM.MULTYPLIER_55x){
 
                 }
                 else {
@@ -171,7 +171,7 @@ fun UpgradeWheel(isActive: MutableLiveData<Boolean>, currentBoost: State<MULTIPL
 
 
 @Composable
-fun OuterCircle(enumValue: State<MULTIPLYER_ENUM?>,isActive: Boolean) {
+fun OuterCircle(enumValue: State<MULTIPLYER_ENUM?>, isActive: Boolean) {
     val segments = listOf(
         MULTIPLYER_ENUM.MULTYPLIER_1x.value,
         MULTIPLYER_ENUM.MULTYPLIER_2x.value,
@@ -184,7 +184,7 @@ fun OuterCircle(enumValue: State<MULTIPLYER_ENUM?>,isActive: Boolean) {
         MULTIPLYER_ENUM.MULTYPLIER_55x.value,
     )
     val context = LocalContext.current
-    var color = if (isActive||enumValue.value!=MULTIPLYER_ENUM.MULTYPLIER_1x) SideTextColor else OffBGColor
+    var color = if (isActive||enumValue.value!= MULTIPLYER_ENUM.MULTYPLIER_1x) SideTextColor else OffBGColor
     LaunchedEffect (isActive){
         Log.d("workd",""+isActive)
     }

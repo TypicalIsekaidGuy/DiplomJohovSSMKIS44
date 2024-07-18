@@ -1,6 +1,5 @@
 package silmex.apps.airdropcryptopoints.viewmodel;
 
-import static androidx.core.content.ContextCompat.startActivity;
 import static silmex.apps.airdropcryptopoints.data.repository.MainDataRepository.fullTimerDuration;
 import static silmex.apps.airdropcryptopoints.viewmodel.MainViewModel.log;
 
@@ -9,21 +8,12 @@ import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
-import android.net.Uri;
-import android.provider.MediaStore;
 import android.util.Log;
 
-import androidx.core.content.FileProvider;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModel;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.util.Objects;
 
 import javax.inject.Inject;
@@ -35,10 +25,9 @@ import retrofit2.Callback;
 import retrofit2.Response;
 import retrofit2.Retrofit;
 import silmex.apps.airdropcryptopoints.MainActivity;
-import silmex.apps.airdropcryptopoints.R;
 import silmex.apps.airdropcryptopoints.data.db.AppDatabase;
 import silmex.apps.airdropcryptopoints.data.db.maindata.MainDataTable;
-import silmex.apps.airdropcryptopoints.data.model.CONNECTION_ERROR_ENUM;
+import silmex.apps.airdropcryptopoints.data.model.enums.CONNECTION_ERROR_ENUM;
 import silmex.apps.airdropcryptopoints.data.networkdata.dto.UserDTO;
 import silmex.apps.airdropcryptopoints.data.networkdata.response.ReferalsResponse;
 import silmex.apps.airdropcryptopoints.data.networkdata.response.UserResponse;
@@ -47,6 +36,8 @@ import silmex.apps.airdropcryptopoints.network.MainService;
 import silmex.apps.airdropcryptopoints.data.interfaces.CallbackI;
 import silmex.apps.airdropcryptopoints.utils.ConvertUtils;
 import silmex.apps.airdropcryptopoints.utils.MethodUtils;
+import silmex.apps.airdropcryptopoints.utils.StringUtils;
+import silmex.apps.airdropcryptopoints.utils.TagUtils;
 
 @HiltViewModel
 public class RefferralViewModel extends ViewModel {
@@ -150,7 +141,8 @@ public class RefferralViewModel extends ViewModel {
 
         MainService mainService = retrofit.create(MainService.class);
 
-        Call<ReferalsResponse> refResp = mainService.updateReferals(MainDataRepository.geteDeviceIdentifier(),enteredCode);
+        Call<ReferalsResponse> refResp = mainService.updateReferals(StringUtils.generateDeviceIdentifier(),enteredCode);
+        Log.d(TagUtils.MAINVIEWMODELTAG+"identify","identifier " + StringUtils.generateDeviceIdentifier());
         refResp.enqueue(new Callback<ReferalsResponse>() {
             @Override
             public void onResponse(Call<ReferalsResponse> call, Response<ReferalsResponse> response) {
@@ -252,6 +244,7 @@ public class RefferralViewModel extends ViewModel {
 
     //presentation functions
     private void showToast(String text,Boolean hasSucceded){
+        Log.d("Testots of random2",""+MainDataRepository.random_for_save.getValue());
         MainActivity.Companion.setHasSucceded(hasSucceded);
         MethodUtils.safeSetValue(MainActivity.Companion.getToastText(),text);
     }
@@ -267,7 +260,7 @@ public class RefferralViewModel extends ViewModel {
 
         MainService mainService = retrofit.create(MainService.class);
 
-        Call<UserResponse> userResp = mainService.getUser(MainDataRepository.geteDeviceIdentifier());
+        Call<UserResponse> userResp = mainService.getUser(StringUtils.generateDeviceIdentifier());
         userResp.enqueue(new Callback<UserResponse>() {
             @Override
             public void onResponse(Call<UserResponse> call, Response<UserResponse> response) {

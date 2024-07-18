@@ -8,7 +8,6 @@ import androidx.room.PrimaryKey;
 
 import org.jetbrains.annotations.NotNull;
 
-import silmex.apps.airdropcryptopoints.data.model.MULTIPLYER_ENUM;
 import silmex.apps.airdropcryptopoints.data.repository.MainDataRepository;
 import silmex.apps.airdropcryptopoints.utils.IntegerUtils;
 
@@ -58,11 +57,11 @@ public class MainDataTable {
 
 
     public MainDataTable(MainDataRepository mdr, Long exit_time){
-        if(MainDataRepository.random_for_save==null){
+        if(MainDataRepository.random_for_save.getValue()==null){
             this.random_save_id = IntegerUtils.generateRandomInteger();
         }
         else{
-            this.random_save_id = MainDataRepository.random_for_save;
+            this.random_save_id = MainDataRepository.random_for_save.getValue();
         }
         didShowLearning = Boolean.TRUE.equals(mdr.didShowLearning.getValue());
         try {
@@ -113,7 +112,14 @@ public class MainDataTable {
         else{
             this.cooldown_estimated_end_time = 0;
         }
-        this.referals = mdr.referals;
+        if(mdr.referals.getValue()!=null){
+            Log.d("DBTEST","no error "+mdr.referals.getValue());
+            this.referals = mdr.referals.getValue();
+        }
+        else{
+            Log.d("DBTEST","ERROR");
+            this.referals = 0;
+        }
         this.exit_time = exit_time;
     }
     public MainDataTable(){

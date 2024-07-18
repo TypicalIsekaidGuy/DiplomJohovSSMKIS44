@@ -1,4 +1,4 @@
-package silmex.apps.airdropcryptopoints.data.model;
+package silmex.apps.airdropcryptopoints.data.model.enums;
 
 public enum MULTIPLYER_ENUM {
     MULTYPLIER_1x(1),

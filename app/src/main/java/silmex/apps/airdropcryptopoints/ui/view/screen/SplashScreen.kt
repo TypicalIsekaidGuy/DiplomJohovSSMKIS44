@@ -30,15 +30,13 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import silmex.apps.airdropcryptopoints.R
-import silmex.apps.airdropcryptopoints.data.model.CONNECTION_ERROR_ENUM
+import silmex.apps.airdropcryptopoints.data.model.enums.CONNECTION_ERROR_ENUM
 import silmex.apps.airdropcryptopoints.ui.theme.AltBG
 import silmex.apps.airdropcryptopoints.ui.theme.FarmingProgressBG
 import silmex.apps.airdropcryptopoints.ui.theme.MainTextColor
 import silmex.apps.airdropcryptopoints.ui.theme.SideTextColor
-import silmex.apps.airdropcryptopoints.ui.theme.WhiteText
 import silmex.apps.airdropcryptopoints.ui.theme.big_text_size
 import silmex.apps.airdropcryptopoints.ui.theme.itimStyle
-import silmex.apps.airdropcryptopoints.ui.theme.medium_text_size
 import silmex.apps.airdropcryptopoints.viewmodel.MainViewModel
 
 @Composable
@@ -47,7 +45,7 @@ fun SplashScreen(mainViewModel: MainViewModel,afterDelayFun: ()->Unit){
     val hadConnectionError by MainViewModel.hadConnectionError.observeAsState()
 
     LaunchedEffect(hadConnectionError) {
-        if(hadConnectionError==true&&errorEnum==CONNECTION_ERROR_ENUM.LOAD_ALL_DATA_STARTUP){
+        if(hadConnectionError==true&&errorEnum== CONNECTION_ERROR_ENUM.LOAD_ALL_DATA_STARTUP){
             mainViewModel.loadAllData()
         }
     }

@@ -36,11 +36,5 @@ public class AppModule {
     public static Retrofit provideRetrofitClient(){
         return RetrofitClient.getClient();
     }
-/*
-    @Singleton
-    @Provides
-    public static UnityAdsRepository provideUnityAdsRepository(@ApplicationContext Context context){
-        return new UnityAdsRepository(context);
-    }*/
 
 }
