@@ -74,7 +74,7 @@ public class MainDataRepository {
     //timer vars
     public CountDownTimer mainTimer;
     public CountDownTimer withdrawalCooldownTimer;
-    public static final long fullTimerDuration = 14400000/*/60*3*/;//TODO change to 14400000
+    public static final long fullTimerDuration = 14400000/60*3;//TODO change to 14400000
     public MutableLiveData<Long> millisUntilFinishedLiveData = new MutableLiveData<>(0L);
     public MutableLiveData<Long> cooldownmillisUntilFinishedLiveData = new MutableLiveData<>(0L);
     public long tempLeftTime = 0;
