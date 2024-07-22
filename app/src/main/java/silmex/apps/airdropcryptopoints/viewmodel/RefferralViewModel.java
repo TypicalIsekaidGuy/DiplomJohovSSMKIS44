@@ -186,7 +186,7 @@ public class RefferralViewModel extends ViewModel {
         ClipboardManager clipboard = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
         ClipData clip = ClipData.newPlainText("Copied Text", refCode.getValue().toString());
         clipboard.setPrimaryClip(clip);
-        showToast("Referral code copied", true);
+        showSnackBar("Referral code copied", true);
 
     }
 
@@ -205,21 +205,21 @@ public class RefferralViewModel extends ViewModel {
 
                             @Override
                             public void onFailure(String errorMessage) {
-                                showToast("Wrong referral code", false);
+                                showSnackBar("Wrong referral code", false);
                                 Log.e("network", "Error: " + errorMessage);
                             }
                         });
                     }
                     else{
-                        showToast("You can't use your own code", false);
+                        showSnackBar("You can't use your own code", false);
                     }
                 }
                 else{
-                    showToast("You already used referral code", false);
+                    showSnackBar("You already used referral code", false);
                 }
             }
             else{
-                showToast("Wrong referral code", false);
+                showSnackBar("Wrong referral code", false);
             }
         }
         else{
@@ -234,18 +234,25 @@ public class RefferralViewModel extends ViewModel {
             log("User entered another user's code and got bonus");
             mainDataRepository.getRefferalYourCodeBonus(1);
             saveUserData();
-            showToast("Bonus added", true);
+            showToast("Bonus added");
             MethodUtils.safeSetValue(textValue,"");
         } else {
-            showToast("Wrong referral code", false);
+            showSnackBar("Wrong referral code", false);
         }
     }
 
 
     //presentation functions
-    private void showToast(String text,Boolean hasSucceded){
-        Log.d("Testots of random2",""+MainDataRepository.random_for_save.getValue());
+    private void showSnackBar(String text, Boolean hasSucceded){
         MainActivity.Companion.setHasSucceded(hasSucceded);
+        if(Objects.equals(MainActivity.Companion.getSnackBarText().getValue(), text)){
+            MethodUtils.safeSetValue(MainActivity.Companion.getSnackBarText(),text+" ");
+        }
+        else{
+            MethodUtils.safeSetValue(MainActivity.Companion.getSnackBarText(),text);
+        }
+    }
+    private void showToast(String text){
         MethodUtils.safeSetValue(MainActivity.Companion.getToastText(),text);
     }
     private void updateProgress(Long estimatedTime){

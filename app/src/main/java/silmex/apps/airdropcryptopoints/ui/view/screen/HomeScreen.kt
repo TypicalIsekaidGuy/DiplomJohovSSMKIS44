@@ -50,6 +50,7 @@ import silmex.apps.airdropcryptopoints.ui.theme.WhiteText
 import silmex.apps.airdropcryptopoints.ui.theme.medium_text_size
 import silmex.apps.airdropcryptopoints.ui.view.composables.BalanceBar
 import silmex.apps.airdropcryptopoints.ui.view.composables.ButtonBackground
+import silmex.apps.airdropcryptopoints.utils.TagUtils
 import silmex.apps.airdropcryptopoints.viewmodel.HomeViewModel
 import silmex.apps.airdropcryptopoints.viewmodel.MainViewModel
 
@@ -65,6 +66,29 @@ fun HomeScreen(viewModel: HomeViewModel,mainViewModel: MainViewModel, onLaunch: 
     val coins by mainViewModel.coins.observeAsState()
     val hadConnectionError by MainViewModel.hadConnectionError.observeAsState()
     val connectionErrorEnum by MainViewModel.connectionErrorEnum.observeAsState()
+
+    var isUpgradable by remember {
+        mutableStateOf(!isMiningLD.value!!||currentBoost.value== MULTIPLYER_ENUM.MULTYPLIER_55x)
+    }
+
+    LaunchedEffect(currentBoost.value, isMiningLD.value) {
+        Log.d(TagUtils.UITAG,""+currentBoost.value)
+        if(isMiningLD.value!!){
+            if(currentBoost.value== MULTIPLYER_ENUM.MULTYPLIER_55x){
+                Log.d(TagUtils.UITAG,""+"should be false1")
+                isUpgradable = false
+            }
+            else {
+                Log.d(TagUtils.UITAG,""+"should be true2")
+                isUpgradable = true
+            }
+        }
+        if(!isMiningLD.value!!){
+            Log.d(TagUtils.UITAG,""+"should be false2")
+            isUpgradable = false
+        }
+        Log.d(TagUtils.UITAG,""+isUpgradable)
+    }
 
     LaunchedEffect(true) {
         onLaunch()
@@ -82,7 +106,7 @@ fun HomeScreen(viewModel: HomeViewModel,mainViewModel: MainViewModel, onLaunch: 
             .padding(horizontal = 16.dp)
             .padding(top = 32.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         BalanceBar(claimedBalance!!,balance!!,progress!!, isMining!!,coins!!,currentBoost.value!!.value, mainViewModel::removeCoin)
-        UpgradeWheel(isMiningLD, currentBoost) { viewModel.upgradeWheelClick() }
+        UpgradeWheel(isUpgradable,isMiningLD, currentBoost) { viewModel.upgradeWheelClick() }
         ClaimButton(currentBoost!!.value!!.value,balance!!,
             progress!!,leftTime!!,isMining!!,!isMining!!,!isMining!!, {
             viewModel.claimClick()
@@ -91,9 +115,7 @@ fun HomeScreen(viewModel: HomeViewModel,mainViewModel: MainViewModel, onLaunch: 
 }
 
 @Composable
-fun UpgradeWheel(isActive: MutableLiveData<Boolean>, currentBoost: State<MULTIPLYER_ENUM?>, upgradeWheelClick: ()->Unit) {
-
-
+fun UpgradeWheel(isUpgradable: Boolean,isActive: MutableLiveData<Boolean>, currentBoost: State<MULTIPLYER_ENUM?>, upgradeWheelClick: ()->Unit) {
 
     var paddingValues1 by remember { mutableStateOf(0f) }
 
@@ -118,21 +140,18 @@ fun UpgradeWheel(isActive: MutableLiveData<Boolean>, currentBoost: State<MULTIPL
         }
         LaunchedEffect(currentBoost.value, isActive.value) {
             if(isActive.value!!){
-                if(currentBoost.value!= MULTIPLYER_ENUM.MULTYPLIER_1x){
-
+                if(currentBoost.value== MULTIPLYER_ENUM.MULTYPLIER_1x){
                     while(true){
-                        paddingValues1 = 4f
+                        paddingValues1 = 16f
                         delay(600)
                         paddingValues1 = 0f
                         delay(600)
                     }
                 }
-                else if(currentBoost.value== MULTIPLYER_ENUM.MULTYPLIER_55x){
-
-                }
+                else if(currentBoost.value== MULTIPLYER_ENUM.MULTYPLIER_55x)
                 else {
                     while(true){
-                        paddingValues1 = 16f
+                        paddingValues1 = 4f
                         delay(600)
                         paddingValues1 = 0f
                         delay(600)
@@ -142,6 +161,7 @@ fun UpgradeWheel(isActive: MutableLiveData<Boolean>, currentBoost: State<MULTIPL
         }
         val clickable = if(isActive.value!!) Modifier
             .clickable(
+                enabled = isUpgradable,
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
             ) {
@@ -159,10 +179,10 @@ fun UpgradeWheel(isActive: MutableLiveData<Boolean>, currentBoost: State<MULTIPL
                 .size(120.dp)
                 .align(Alignment.Center)) {
             Image(
-                painter = painterResource(id = if(isActive.value!!) R.drawable.upgrade_center_active else R.drawable.upgrade_center_unactive),
+                painter = painterResource(id = if(isUpgradable) R.drawable.upgrade_center_active else R.drawable.upgrade_center_unactive),
                 contentDescription = null,
                 modifier = clickable
-                    .padding(if (currentBoost.value != MULTIPLYER_ENUM.MULTYPLIER_55x) animatedPaddingValues1.dp else 0.dp)
+                    .padding(if (isUpgradable) animatedPaddingValues1.dp else 0.dp)
                     .align(Alignment.Center)
             )
         }

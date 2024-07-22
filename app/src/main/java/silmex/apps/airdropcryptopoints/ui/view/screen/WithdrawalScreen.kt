@@ -61,6 +61,7 @@ import silmex.apps.airdropcryptopoints.ui.theme.UsedGreen
 import silmex.apps.airdropcryptopoints.ui.theme.WithdrawalTextColor
 import silmex.apps.airdropcryptopoints.ui.theme.average_text_size
 import silmex.apps.airdropcryptopoints.ui.theme.itimStyle
+import silmex.apps.airdropcryptopoints.ui.view.composables.AnimatedTimeUnit
 import silmex.apps.airdropcryptopoints.ui.view.composables.BalanceBar
 import silmex.apps.airdropcryptopoints.ui.view.composables.DashedLine
 import silmex.apps.airdropcryptopoints.ui.view.composables.InActiveBackground
@@ -76,12 +77,19 @@ fun WithdrawalScreen(viewModel: WithdrawalViewModel,mainViewModel: MainViewModel
     val currentBoost by mainViewModel.currentChosenMultipliyer.observeAsState()
     val transactionList by viewModel.transactionList.observeAsState()
     val progress by viewModel.progress.observeAsState()
+    val canWithdraw by viewModel.canWithdraw.observeAsState()
+    val cooldownMilis by viewModel.cooldownmillisUntilFinishedLiveData.observeAsState()
+    val milis by viewModel.millisUntilFinishedLiveData.observeAsState()
     val hadConnectionError by MainViewModel.hadConnectionError.observeAsState()
     val connectionErrorEnum by MainViewModel.connectionErrorEnum.observeAsState()
     val claimedBalance by mainViewModel.claimedBalance.observeAsState()
 
+    var didLaunch = remember { mutableStateOf(false) }
     LaunchedEffect(true) {
         onLaunch()
+        if(didLaunch.value){
+            didLaunch.value = true
+        }
     }
 
     LaunchedEffect(hadConnectionError) {
@@ -107,14 +115,16 @@ fun WithdrawalScreen(viewModel: WithdrawalViewModel,mainViewModel: MainViewModel
         BalanceBar(claimedBalance!!,balance!!,progress!!, isMining!!,coins!!,currentBoost!!.value, mainViewModel::removeCoin)
         Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
 
-            Text(
+            TimerText(cooldownMilis,canWithdraw!!, isMining!!,milis!!)
+
+/*            Text(
                 text = "Withdrawal will be available after a day",
                 color = MainTextColor,
                 fontFamily = itimStyle,
                 fontSize = average_text_size,
                 textAlign = TextAlign.Center,
                 modifier = Modifier
-            )
+            )*/
 
             InActiveBackground(true,{
             MainScope().launch {
@@ -129,10 +139,108 @@ fun WithdrawalScreen(viewModel: WithdrawalViewModel,mainViewModel: MainViewModel
             hasShownFirstWithdrawal = hasShownFirstWithdrawal, transactionList!!, hasWorked,
             onClick = viewModel::copyCodeOnClick)
 
-        WithdrawalScreenEnd(){
-            viewModel.googlePlayCodeOnClick()
+        if(!transactionList.isNullOrEmpty()){
+            WithdrawalScreenEnd(){
+                viewModel.googlePlayCodeOnClick()
+            }
         }
     }
+}
+
+@Composable
+fun TimerText(cooldownMilis: Long?, canWithdraw: Boolean, isMining: Boolean, milis: Long){
+    if(isMining){
+
+
+        val hours = ((milis/1000) / 3600).toInt()
+        val minutes = (((milis/1000) / 60)%60).toInt()
+        val seconds = ((milis/1000) % 60).toInt()
+
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center){
+            Text(
+                text = "Mining will end in ",
+                color = MainTextColor,
+                fontFamily = itimStyle,
+                fontSize = average_text_size,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+            )
+            Row {
+                AnimatedTimeUnit(timeUnit = hours / 10,WithdrawalTextColor) // Tens place of minutes
+                AnimatedTimeUnit(timeUnit = hours % 10,WithdrawalTextColor) // Tens place of minutes
+                Text(//usdt
+                    text = ":",
+                    color = WithdrawalTextColor,
+                    textAlign = TextAlign.Center,fontFamily = itimStyle,
+                    fontSize = 18.sp
+                )
+                AnimatedTimeUnit(timeUnit = minutes / 10,WithdrawalTextColor) // Tens place of minutes
+                AnimatedTimeUnit(timeUnit = minutes % 10,WithdrawalTextColor) // Units place of minutes
+
+                Text(//usdt
+                    text = ":",
+                    color = WithdrawalTextColor,
+                    textAlign = TextAlign.Center,fontFamily = itimStyle,
+                    fontSize = 18.sp
+                )
+                AnimatedTimeUnit(timeUnit = seconds / 10,WithdrawalTextColor) // Tens place of seconds
+                AnimatedTimeUnit(timeUnit = seconds % 10,WithdrawalTextColor) // Units place of seconds
+            }
+        }
+    }
+    else{
+
+        if(cooldownMilis==null||canWithdraw){
+
+            Text(
+                text = "Withdrawal is available",
+                color = WithdrawalTextColor,
+                fontFamily = itimStyle,
+                fontSize = average_text_size,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+            )
+        }
+        else{
+
+            val hours = ((cooldownMilis/1000) / 3600).toInt()
+            val minutes = (((cooldownMilis/1000) / 60)%60).toInt()
+            val seconds = ((cooldownMilis/1000) % 60).toInt()
+
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center){
+                Text(
+                    text = "Withdrawal will be available after ",
+                    color = MainTextColor,
+                    fontFamily = itimStyle,
+                    fontSize = average_text_size,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                )
+                Row {
+                    AnimatedTimeUnit(timeUnit = hours / 10,WithdrawalTextColor) // Tens place of minutes
+                    AnimatedTimeUnit(timeUnit = hours % 10,WithdrawalTextColor) // Tens place of minutes
+                    Text(//usdt
+                        text = ":",
+                        color = WithdrawalTextColor,
+                        textAlign = TextAlign.Center,fontFamily = itimStyle,
+                        fontSize = 18.sp
+                    )
+                    AnimatedTimeUnit(timeUnit = minutes / 10,WithdrawalTextColor) // Tens place of minutes
+                    AnimatedTimeUnit(timeUnit = minutes % 10,WithdrawalTextColor) // Units place of minutes
+
+                    Text(//usdt
+                        text = ":",
+                        color = WithdrawalTextColor,
+                        textAlign = TextAlign.Center,fontFamily = itimStyle,
+                        fontSize = 18.sp
+                    )
+                    AnimatedTimeUnit(timeUnit = seconds / 10,WithdrawalTextColor) // Tens place of seconds
+                    AnimatedTimeUnit(timeUnit = seconds % 10,WithdrawalTextColor) // Units place of seconds
+                }
+            }
+        }
+    }
+
 }
 
 @Composable

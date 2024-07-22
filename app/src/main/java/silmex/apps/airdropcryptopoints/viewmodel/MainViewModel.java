@@ -6,6 +6,8 @@ import android.annotation.SuppressLint;
 import android.app.Application;
 import android.content.Context;
 import android.os.CountDownTimer;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -69,6 +71,8 @@ public class MainViewModel extends ViewModel {
 
     public MutableLiveData<Float> balance = new MutableLiveData<>(0f);
 
+    public MutableLiveData<Boolean> canGetRefferalBonus = new MutableLiveData<>(true);
+
     public MutableLiveData<Float> claimedBalance = new MutableLiveData<Float>(0f);
 
     public static MutableLiveData<Boolean> hasLoadedAd = new MutableLiveData<Boolean>(false);
@@ -111,9 +115,12 @@ public class MainViewModel extends ViewModel {
         mainDataRepository.currentChosenMultipliyer.observeForever(this::updateTimer);
 
         mainDataRepository.didShowLearning.observeForever(newValue -> didShowLearningScreen.setValue(newValue));
+
+        mainDataRepository.enteredCode.observeForever(newValue -> canGetRefferalBonus.postValue(mainDataRepository.hasNotEnteredCode()));
     }
 
     public void loadAllData(){
+        Log.d(TagUtils.MAINVIEWMODELTAG,"Fired offff");
         MainDataDao md = db.mainDataDao();
         AppDatabase.databaseWriteExecutor.execute(() -> {
 
@@ -234,7 +241,7 @@ public class MainViewModel extends ViewModel {
     }
 
     public static void throwConnectionError(CONNECTION_ERROR_ENUM errorEnum) {
-        showToast("Please, turn on Internet", false);
+        showSnackBar("Please, turn on Internet", false);
         MethodUtils.safeSetValue(MainViewModel.doesNotHaveConnection,true);
         MethodUtils.safeSetValue(MainViewModel.hadConnectionError,true);
         MethodUtils.safeSetValue(MainViewModel.connectionErrorEnum, errorEnum);
@@ -319,7 +326,8 @@ public class MainViewModel extends ViewModel {
         });
     }
     private void getYourCodeBonus(Integer diff, Integer toSave){
-        showToast("Congratulations, you received 1m crypto points!",true);
+        Handler handler = new Handler(Looper.getMainLooper());
+        handler.postDelayed(() -> showToast("Congratulations, you received "+ diff + "m crypto points!"), 3200);
         log("User got his code entered by another user and received bonus");
         mainDataRepository.getRefferalOtherCodeBonus(diff);
         MethodUtils.safeSetValue(mainDataRepository.referals,toSave);
@@ -361,10 +369,11 @@ public class MainViewModel extends ViewModel {
                         if(user.referals>mdt.referals){
                             getYourCodeBonus(user.referals-mdt.referals, user.referals);
                         }
-                        setUpCooldown(mdt.cooldown_estimated_end_time);
+                        setUpCooldown();
                     });
                 }
                 else {
+                    Log.d(TagUtils.MAINVIEWMODELTAG,"failudre of network request");
                     Log.d("network", "failure" + response.toString());
                 }
             }
@@ -375,13 +384,9 @@ public class MainViewModel extends ViewModel {
             }
         });
     }
-    private void setUpCooldown(long delay){
-        Log.d("usercreated",""+userHasBeenJustCreated);
+    private void setUpCooldown(){
         if(userHasBeenJustCreated){
             mainDataRepository.tryRefreshCooldown(mainDataRepository.widthdrawalDelay);
-        }
-        else{
-            mainDataRepository.tryRefreshCooldown(delay);
         }
     }
 
@@ -478,8 +483,16 @@ public class MainViewModel extends ViewModel {
     }
 
     //util functions
-    public static void showToast(String text, Boolean hasSucceded){
+    public static void showSnackBar(String text, Boolean hasSucceded){
+        if(Objects.equals(MainActivity.Companion.getSnackBarText().getValue(), text)){
+            MethodUtils.safeSetValue(MainActivity.Companion.getSnackBarText(),text+" ");
+        }
+        else{
+            MethodUtils.safeSetValue(MainActivity.Companion.getSnackBarText(),text);
+        }
         MainActivity.Companion.setHasSucceded(hasSucceded);
+    }
+    public static void showToast(String text){
         MethodUtils.safeSetValue(MainActivity.Companion.getToastText(),text);
     }
     public boolean isOnline(){

@@ -36,6 +36,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -360,7 +361,7 @@ fun AnimatedSum(balance: Int) {
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
-fun AnimatedTimeUnit(timeUnit: Int) {
+fun AnimatedTimeUnit(timeUnit: Int, color: Color = WhiteText) {
     AnimatedContent(
         targetState = timeUnit,
         transitionSpec = {
@@ -372,7 +373,7 @@ fun AnimatedTimeUnit(timeUnit: Int) {
     ) { targetNumber ->
         Text(//usdt
                             text = "$targetNumber",
-                            color = WhiteText,
+                            color = color,
                             textAlign = TextAlign.Center,fontFamily = itimStyle,
                             fontSize = 18.sp
                         )

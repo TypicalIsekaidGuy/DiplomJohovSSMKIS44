@@ -1,4 +1,4 @@
-package silmex.apps.airdropcryptopoints.ui.view;
+package silmex.apps.airdropcryptopoints.ui.view.customviews;
 
 import android.content.Context;
 import android.view.Gravity;
@@ -10,25 +10,17 @@ import androidx.appcompat.widget.AppCompatTextView;
 
 public class CustomToastView extends AppCompatTextView {
 
-    public CustomToastView(Context context, Boolean hasSucceded) {
+    public CustomToastView(Context context) {
         super(context);
         // Customize the appearance of the toast view
         int padding = 48;
         setPadding(padding, padding, padding, padding);
         setGravity(Gravity.CENTER);
-        if(hasSucceded==null){
-            setTextColor(getResources().getColor(R.color.toast_succeded_text));
-            setBackgroundResource(R.drawable.toast_succeded_bg);
-        } else if (!hasSucceded) {
-            setTextColor(getResources().getColor(R.color.toast_not_succeded_text));
-            setBackgroundResource(R.drawable.toast_not_succeded_bg);
-        }
-        else if (hasSucceded){
-            setTextColor(getResources().getColor(R.color.toast_succeded_text));
-            setBackgroundResource(R.drawable.toast_succeded_bg);
-        }
         setTextColor(getResources().getColor(R.color.main_text_color));
+        setBackgroundResource(R.drawable.toast_bg);
+        setFirstBaselineToTopHeight(100);
         setTypeface(ResourcesCompat.getFont(context, R.font.itim));
+        setTextAlignment(TEXT_ALIGNMENT_CENTER);
         setTextSize(20);
     }
 

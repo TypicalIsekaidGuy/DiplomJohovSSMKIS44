@@ -1,5 +1,6 @@
 package silmex.apps.airdropcryptopoints.ui.view.screen
 
+import android.util.Log
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -27,6 +28,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import silmex.apps.airdropcryptopoints.R
@@ -37,17 +39,28 @@ import silmex.apps.airdropcryptopoints.ui.theme.MainTextColor
 import silmex.apps.airdropcryptopoints.ui.theme.SideTextColor
 import silmex.apps.airdropcryptopoints.ui.theme.big_text_size
 import silmex.apps.airdropcryptopoints.ui.theme.itimStyle
+import silmex.apps.airdropcryptopoints.utils.MethodUtils
+import silmex.apps.airdropcryptopoints.utils.TagUtils
 import silmex.apps.airdropcryptopoints.viewmodel.MainViewModel
 
 @Composable
 fun SplashScreen(mainViewModel: MainViewModel,afterDelayFun: ()->Unit){
     val errorEnum by MainViewModel.connectionErrorEnum.observeAsState()
     val hadConnectionError by MainViewModel.hadConnectionError.observeAsState()
+    val appName = stringResource(id = R.string.app_name)
 
     LaunchedEffect(hadConnectionError) {
-        if(hadConnectionError==true&&errorEnum== CONNECTION_ERROR_ENUM.LOAD_ALL_DATA_STARTUP){
+        Log.d(TagUtils.MAINVIEWMODELTAG,"connectoin error"+hadConnectionError)
+        Log.d(TagUtils.MAINVIEWMODELTAG,"connectoin error"+errorEnum)
+        if(errorEnum== CONNECTION_ERROR_ENUM.LOAD_ALL_DATA_STARTUP){
+            Log.d(TagUtils.MAINVIEWMODELTAG,"connectoin error"+"did work")
+            MethodUtils.safeSetValue(MainViewModel.connectionErrorEnum,null)
+            delay(5000L)
             mainViewModel.loadAllData()
         }
+        MethodUtils.safeSetValue(MainViewModel.hadConnectionError,false)
+        delay(3000L)
+        afterDelayFun()
     }
 
     Box(
@@ -61,12 +74,8 @@ fun SplashScreen(mainViewModel: MainViewModel,afterDelayFun: ()->Unit){
             Image(painter = painterResource(id = R.drawable.airdrop_icon), contentDescription = "", modifier = Modifier
                 .size(256.dp)
                 .align(Alignment.CenterHorizontally))
-            Text("AirDrop Crypto Points", fontFamily = itimStyle, fontSize = big_text_size,color = MainTextColor)
+            Text(appName, fontFamily = itimStyle, fontSize = big_text_size,color = MainTextColor)
             InfiniteLoadingAnimation()
-            LaunchedEffect(key1 = true) {
-                delay(3000L)
-                afterDelayFun()
-            }
         }
     }
 }

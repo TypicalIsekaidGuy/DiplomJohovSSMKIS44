@@ -141,11 +141,12 @@ public class HomeViewModel extends ViewModel implements UpgradeWheelCallBack {
 
     //onClick functions
     public void upgradeWheelClick(){
-        if (isOnline()) {
+/*        if (isOnline()) {
             unityAdsRepository.showUnityAds();
         } else {
             MainViewModel.throwConnectionError(CONNECTION_ERROR_ENUM.UPGRADE_WHEEL_CLICK);
-        }
+        }*/ //TODO leave this and delete other
+        _upgradeWheel();
     }
     public void claimClick(){
         if(isOnline()){

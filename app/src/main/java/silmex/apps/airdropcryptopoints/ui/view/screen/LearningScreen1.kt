@@ -24,6 +24,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringArrayResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
@@ -51,6 +53,8 @@ import silmex.apps.airdropcryptopoints.ui.view.composables.NavigateToButton
 
 @Composable
 fun LearningScreen1(navigateTo:()->Unit) {
+    val appName = stringResource(id = R.string.app_name)
+
     Box(Modifier.fillMaxSize()){
         Column(
             Modifier
@@ -64,7 +68,7 @@ fun LearningScreen1(navigateTo:()->Unit) {
                     .fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(24.dp)
             ) {
                 Text(
-                    text = "Welcome to the Airdrop Crypto Points app",
+                    text = "Welcome to the $appName app",
                     color = MainTextColor,
                     fontFamily = itimStyle,
                     fontSize = big_text_size,
@@ -106,7 +110,10 @@ fun LearningScreen1(navigateTo:()->Unit) {
             ))
         }
         Column (Modifier.align(Alignment.BottomCenter)){
-            Box(Modifier.fillMaxWidth().padding(horizontal = 16.dp)){
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)){
                 NavigateToButton("NEXT", Modifier, { navigateTo() })
             }
             Spacer(modifier = Modifier.fillMaxHeight(0.07f))

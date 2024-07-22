@@ -3,6 +3,7 @@ package silmex.apps.airdropcryptopoints.viewmodel;
 
 import static silmex.apps.airdropcryptopoints.data.repository.MainDataRepository.fullTimerDuration;
 
+import android.annotation.SuppressLint;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
@@ -10,7 +11,6 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.lifecycle.MutableLiveData;
-import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModel;
 
 import java.util.ArrayList;
@@ -42,6 +42,7 @@ import silmex.apps.airdropcryptopoints.network.MainService;
 import silmex.apps.airdropcryptopoints.network.RetrofitClient;
 import silmex.apps.airdropcryptopoints.network.WithdrawalService;
 import silmex.apps.airdropcryptopoints.utils.ConvertUtils;
+import silmex.apps.airdropcryptopoints.utils.MethodUtils;
 import silmex.apps.airdropcryptopoints.utils.StringUtils;
 
 @HiltViewModel
@@ -55,9 +56,16 @@ public class WithdrawalViewModel extends ViewModel {
 
     //main vars
     public MutableLiveData<MULTIPLYER_ENUM> currentChosenMultipliyer = new MutableLiveData<>(MULTIPLYER_ENUM.MULTYPLIER_1x);
+
     public MutableLiveData<Float> balance = new MutableLiveData<>(0f);
     public MutableLiveData<Boolean> isMining = new MutableLiveData<>(false);
+
+    public MutableLiveData<Boolean> canWithdraw = new MutableLiveData<>(false);
     public MutableLiveData<List<Transaction>> transactionList = new MutableLiveData<>(new ArrayList<>());
+
+    public MutableLiveData<Long> cooldownmillisUntilFinishedLiveData = new MutableLiveData<>(864000000L);
+
+    public MutableLiveData<Long> millisUntilFinishedLiveData = new MutableLiveData<>(864000000L);
 
     //presentation vars
     public MutableLiveData<Float> progress = new MutableLiveData<Float>(0f);
@@ -74,68 +82,65 @@ public class WithdrawalViewModel extends ViewModel {
     }
 
     private void setUpObservers(){
-        mainDataRepository.currentChosenMultipliyer.observeForever(new Observer<MULTIPLYER_ENUM>() {
-            @Override
-            public void onChanged(MULTIPLYER_ENUM newValue) {
+        mainDataRepository.currentChosenMultipliyer.observeForever(newValue -> currentChosenMultipliyer.postValue(newValue));
 
-                currentChosenMultipliyer.postValue(newValue);
-            }
-        });
-        mainDataRepository.balance.observeForever(new Observer<Float>() {
-            @Override
-            public void onChanged(Float newValue) {
+        mainDataRepository.balance.observeForever(newValue -> balance.postValue(newValue));
 
-                balance.postValue(newValue);
-            }
-        });
-        mainDataRepository.isActive.observeForever(new Observer<Boolean>() {
-            @Override
-            public void onChanged(Boolean newValue) {
+        mainDataRepository.isActive.observeForever(newValue -> isMining.postValue(newValue));
 
-                isMining.postValue(newValue);
-            }
-        });
-        mainDataRepository.transactionList.observeForever(new Observer<List<Transaction>>() {
-            @Override
-            public void onChanged(List<Transaction> newValue) {
+        mainDataRepository.canWithdraw.observeForever(newValue -> canWithdraw.postValue(newValue));
 
-                transactionList.postValue(newValue);
-            }
-        });
+        mainDataRepository.transactionList.observeForever(newValue -> transactionList.postValue(newValue));
 
-        mainDataRepository.millisUntilFinishedLiveData.observeForever(new Observer<Long>() {
-            @Override
-            public void onChanged(Long newValue) {
-                if(newValue!=0){
+        mainDataRepository.millisUntilFinishedLiveData.observeForever(newValue -> {
+            if(newValue!=0){
 
-                    updateProgress(newValue);
+                updateProgress(newValue);
 
-                    if(newValue<=500L){
-                        onTimerEnd();
-                    }
+                if(newValue<=500L){
+                    onTimerEnd();
                 }
+
+                millisUntilFinishedLiveData.postValue(newValue);
             }
         });
+
+        mainDataRepository.cooldownmillisUntilFinishedLiveData.observeForever(newValue -> cooldownmillisUntilFinishedLiveData.postValue(newValue));
     }
 
     //presentation functions
     public void onTimerEnd(){
 
     }
-    public void showToast(String text,Boolean hasSucceded){
+    public void showSnackBar(String text, Boolean hasSucceded){
         MainActivity.Companion.setHasSucceded(hasSucceded);
-        MainActivity.Companion.getToastText().setValue(text);
+        if(Objects.equals(MainActivity.Companion.getSnackBarText().getValue(), text)){
+            MethodUtils.safeSetValue(MainActivity.Companion.getSnackBarText(),text+" ");
+        }
+        else{
+            MethodUtils.safeSetValue(MainActivity.Companion.getSnackBarText(),text);
+        }
     }
     public void updateProgress(Long estimatedTime){
         progress.setValue( ((float)estimatedTime/fullTimerDuration));
+    }
+    @SuppressLint("DefaultLocale")
+    private String getTimeCooldown(MutableLiveData<Long> cooldownmillisUntilFinishedLiveData){
+        if(cooldownmillisUntilFinishedLiveData.getValue()!=null){
+            int hours = Math.toIntExact(((cooldownmillisUntilFinishedLiveData.getValue() / 1000) / 3600));
+            int minutes = Math.toIntExact((((cooldownmillisUntilFinishedLiveData.getValue() / 1000) / 60) % 60));
+            int seconds = Math.toIntExact(((cooldownmillisUntilFinishedLiveData.getValue() / 1000) % 60));
+            return String.format("%02d:%02d:%02d", hours, minutes, seconds);
+        }
+        return "";
     }
 
     //onClick functions
     public void withdrawalOnClick(){
         if(isOnline()){
-            if(!isMining.getValue()){
-                Log.d("usercreated","withdraw "+mainDataRepository.canWithdraw.getValue());
-                if(mainDataRepository.canWithdraw.getValue()!=null&&mainDataRepository.canWithdraw.getValue()){
+            if(Boolean.FALSE.equals(isMining.getValue())){
+                Log.d("usercreated","withdraw "+canWithdraw.getValue());
+                if(canWithdraw.getValue()!=null&&canWithdraw.getValue()){
                     WithdrawalService serviceTrans = RetrofitClient.getClient().create(WithdrawalService.class);
                     Float bucks = mainDataRepository.getBalanceForWithdrawal();
                     if(bucks!=null){
@@ -177,11 +182,11 @@ public class WithdrawalViewModel extends ViewModel {
                 }
                 else{
                     Log.d("REPO!!","withdraw "+mainDataRepository.cooldownmillisUntilFinishedLiveData.getValue());
-                    showToast("You need to wait around a day",false);
+                    showSnackBar("The withdrawal will be available after "+getTimeCooldown(cooldownmillisUntilFinishedLiveData),false);
                 }
             }
             else{
-                showToast("Don't forget to claim your points when the timer ends",false);
+                showSnackBar("Wait for mining to end after "+getTimeCooldown(millisUntilFinishedLiveData),false);
             }
         }
         else{
@@ -195,7 +200,7 @@ public class WithdrawalViewModel extends ViewModel {
         ClipboardManager clipboard = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
         ClipData clip = ClipData.newPlainText("Copied Text", text);
         clipboard.setPrimaryClip(clip);
-        showToast("Code copied", true);
+        showSnackBar("Code copied", true);
 
     }
 

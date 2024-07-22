@@ -74,7 +74,7 @@ public class MainDataRepository {
     //timer vars
     public CountDownTimer mainTimer;
     public CountDownTimer withdrawalCooldownTimer;
-    public static final long fullTimerDuration = 14400000/60*3;//TODO change to 14400000
+    public static final long fullTimerDuration = 14400000/600;//TODO change to 14400000
     public MutableLiveData<Long> millisUntilFinishedLiveData = new MutableLiveData<>(0L);
     public MutableLiveData<Long> cooldownmillisUntilFinishedLiveData = new MutableLiveData<>(0L);
     public long tempLeftTime = 0;
@@ -253,6 +253,9 @@ public class MainDataRepository {
         }
         if(Boolean.FALSE.equals(canWithdraw.getValue())||mdt.cooldown_estimated_end_time==0){
             long temp  = (serverTime.getTime() - mdt.exit_time);
+            Log.d("Repo111","fired off" +temp);
+            Log.d("Repo111","fired off" +mdt.exit_time);
+            Log.d("Repo111","fired off" +serverTime.getTime());
             if(temp-mdt.cooldown_estimated_end_time<=0){
                 Log.d("Repo111","fired off" +(mdt.cooldown_estimated_end_time-temp));
                 tryRefreshCooldown(mdt.cooldown_estimated_end_time-temp);

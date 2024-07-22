@@ -19,9 +19,11 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -37,12 +39,15 @@ import silmex.apps.airdropcryptopoints.ui.theme.FarmingProgressBG
 import silmex.apps.airdropcryptopoints.ui.theme.MainBG
 import silmex.apps.airdropcryptopoints.ui.theme.MainTextColor
 import silmex.apps.airdropcryptopoints.ui.theme.SideTextColor
+import silmex.apps.airdropcryptopoints.ui.theme.WhiteText
 import silmex.apps.airdropcryptopoints.ui.theme.average_text_size
 import silmex.apps.airdropcryptopoints.ui.theme.big_text_size
 import silmex.apps.airdropcryptopoints.ui.theme.itimStyle
 import silmex.apps.airdropcryptopoints.ui.theme.medium_text_size
 import silmex.apps.airdropcryptopoints.utils.IntegerUtils
 import silmex.apps.airdropcryptopoints.utils.StringUtils.getBalanceText
+import silmex.apps.airdropcryptopoints.utils.TagUtils
+import kotlin.random.Random
 
 @Composable
 fun BalanceBar(claimedBalance: Float,balance: Float,progress: Float, isFarming: Boolean, coins: List<Coin?>,currentMultiplier: Int, onRemove: (Int) -> Unit) {
@@ -73,7 +78,7 @@ fun BalanceBar(claimedBalance: Float,balance: Float,progress: Float, isFarming: 
             1f
         } else almostAlpha0
     }
-/*    var finalColorPlus by remember { mutableStateOf(AlmostTransparent) }
+    var finalColorPlus by remember { mutableStateOf(AlmostTransparent) }
     val animatedColorPlus by animateColorAsState(
         targetValue = finalColorPlus,
         animationSpec = tween(durationMillis = 400)
@@ -84,7 +89,7 @@ fun BalanceBar(claimedBalance: Float,balance: Float,progress: Float, isFarming: 
             delay(300)
             finalColorPlus = AlmostTransparent
         }
-    }*/
+    }
     BoxWithConstraints(
         modifier = Modifier
             .fillMaxWidth()
@@ -93,12 +98,18 @@ fun BalanceBar(claimedBalance: Float,balance: Float,progress: Float, isFarming: 
             .border(1.dp, FarmingProgressBG, RoundedCornerShape(16.dp))
     ) {
 
-        Box(modifier = Modifier.fillMaxWidth().padding(top = 4.dp)){
-            Text("Your balance", fontSize = big_text_size, color = MainTextColor, fontFamily = itimStyle, modifier = Modifier.padding(top = 16.dp).align(Alignment.TopCenter))
+        Box(modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 4.dp)){
+            Text("Your balance", fontSize = big_text_size, color = MainTextColor, fontFamily = itimStyle, modifier = Modifier
+                .padding(top = 16.dp)
+                .align(Alignment.TopCenter))
             Image(
                 painter = painterResource(id = image),
                 contentDescription = "",
-                modifier = Modifier.size(64.dp).align(Alignment.CenterStart)
+                modifier = Modifier
+                    .size(64.dp)
+                    .align(Alignment.CenterStart)
             )
         }
         Column(
@@ -125,10 +136,8 @@ fun BalanceBar(claimedBalance: Float,balance: Float,progress: Float, isFarming: 
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier.align(Alignment.Center)
         ) {
-/*
             Text("+", fontSize = 48.sp, color = animatedColorPlus, fontFamily = itimStyle, modifier = Modifier)
-*/
-            Text(getBalanceText(claimedBalance), fontSize = 48.sp, color = SideTextColor, fontFamily = itimStyle, modifier = Modifier)
+            BalanceText(claimedBalance)
             Spacer(Modifier.height(1.dp))
         }
         FallingCoins(coins,maxHeight.value,maxWidth.value,1f+currentMultiplier*0.01f, onRemove)
@@ -141,6 +150,90 @@ fun BalanceBar(claimedBalance: Float,balance: Float,progress: Float, isFarming: 
             .fillMaxWidth())
     }
 }
+
+@Composable
+fun BalanceText(balanceFloat: Float) {
+    val balance = balanceFloat.toInt()
+
+    val lastNumber = balance%10
+    val number1 = balance/10 %10
+    val number2 = balance/100 %10
+    val number3 = balance/1000 %10
+    val number4 = balance/10000 %10
+    val number5 = balance/100000 %10
+    val number6 = balance/1000000 %10
+    val number7 = balance/10000000 %10
+    val number8 = balance/100000000 %10
+
+    LaunchedEffect(balance){
+        Log.d("UITEST1",number1.toString())
+        Log.d("UITEST2",number1.toString())
+        Log.d("UITEST5",number5.toString())
+        Log.d("UITEST6",number6.toString())
+    }
+    Column(
+    ) {
+        Row {
+            if(number8>0){
+                AnimatedBalanceUnit(timeUnit = number8) // Units place of minutes
+            }
+            if(number8>0||number7>0){
+                AnimatedBalanceUnit(timeUnit = number7) // Units place of minutes
+            }
+            if(number8>0||number7>0||number6>0){
+                AnimatedBalanceUnit(timeUnit = number6) // Units place of minutes
+                Text(" ", fontSize = 48.sp, color = SideTextColor, fontFamily = itimStyle, modifier = Modifier)
+            }
+            if(number8>0||number7>0||number6>0||number5>0){
+                AnimatedBalanceUnit(timeUnit = number5) // Units place of minutes
+            }
+            if(number8>0||number7>0||number6>0||number5>0||number4>0){
+                AnimatedBalanceUnit(timeUnit = number4) // Units place of minutes
+            }
+            if(number8>0||number7>0||number6>0||number5>0||number4>0||number3>0){
+                AnimatedBalanceUnit(timeUnit = number3) // Units place of minutes
+                Text(" ", fontSize = 48.sp, color = SideTextColor, fontFamily = itimStyle, modifier = Modifier)
+            }
+            if(number8>0||number7>0||number6>0||number5>0||number4>0||number3>0||number2>0){
+                AnimatedBalanceUnit(timeUnit = number2) // Units place of minutes
+            }
+            if(number8>0||number7>0||number6>0||number5>0||number4>0||number3>0||number2>0||number1>0){
+                AnimatedBalanceUnit(timeUnit = number1) // Units place of minutes
+            }
+            AnimatedBalanceUnit(timeUnit = lastNumber) // Units place of seconds
+        }
+    }
+}
+
+
+@OptIn(ExperimentalAnimationApi::class)
+@Composable
+fun AnimatedBalanceUnit(timeUnit: Int, color: Color = SideTextColor) {
+    // State to hold the current displayed number
+    var currentNumber = timeUnit
+
+    // AnimatedContent for the scrolling animation
+    AnimatedContent(
+        targetState = currentNumber,
+        transitionSpec = {
+            (slideInVertically { height -> height } + fadeIn() with
+                    slideOutVertically { height -> -height } + fadeOut()).using(
+                SizeTransform(clip = false)
+            )
+        }
+    ) { targetNumber ->
+        Text(
+            targetNumber.toString(),
+            fontSize = 48.sp,
+            color = color,
+            fontFamily = itimStyle,
+            modifier = Modifier
+        )
+    }
+}
+
+
+
 
 fun formatTime(time: Int): String {
     val minutes = time / 60

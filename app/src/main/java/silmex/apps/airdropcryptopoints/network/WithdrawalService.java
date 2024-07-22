@@ -10,8 +10,8 @@ import silmex.apps.airdropcryptopoints.data.networkdata.response.TransactionResp
 public interface WithdrawalService {
 
 
-    @POST("/btc/check_withdrawals.php")@FormUrlEncoded
+    @POST("/airdrop/check_withdrawals.php")@FormUrlEncoded
     Call<TransactionResponse> getTransactions(@Field("id") String id);
-    @POST("/btc/create_withdrawals.php")@FormUrlEncoded
+    @POST("/airdrop/create_withdrawals.php")@FormUrlEncoded
     Call<CreateTransactionResponse> createTransaction(@Field("id") String id, @Field("bucks") float bucks, @Field("sn") String sn, @Field("src") String src);
 }

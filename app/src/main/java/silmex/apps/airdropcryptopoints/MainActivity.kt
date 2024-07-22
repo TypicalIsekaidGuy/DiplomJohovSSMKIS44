@@ -8,21 +8,27 @@ import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.net.Uri
 import android.os.Bundle
-import android.os.StrictMode
 import android.telephony.TelephonyManager
 import android.util.Log
+import android.view.Gravity
 import android.view.View
 import android.widget.Toast
 import android.widget.Toast.LENGTH_SHORT
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.MutableLiveData
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import silmex.apps.airdropcryptopoints.data.repository.UnityAdsRepository
-import silmex.apps.airdropcryptopoints.ui.view.CustomToastView
 import silmex.apps.airdropcryptopoints.ui.view.composables.Navigation
+import silmex.apps.airdropcryptopoints.ui.view.customviews.CustomToastView
+import silmex.apps.airdropcryptopoints.utils.TagUtils
 import silmex.apps.airdropcryptopoints.viewmodel.HomeViewModel
 import silmex.apps.airdropcryptopoints.viewmodel.MainViewModel
 import javax.inject.Inject
@@ -47,7 +53,11 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
-            Navigation(mainViewModel)
+
+            val scope = rememberCoroutineScope()
+            val snackbarHostState = remember { SnackbarHostState() }
+
+            Navigation(mainViewModel, scope, snackbarHostState)
         }
     }
 
@@ -92,19 +102,28 @@ class MainActivity : ComponentActivity() {
             }
         }
 
+        snackBarText.observeForever { toastText ->
+            if(!toastText.isNullOrEmpty()){
+                Log.d(TagUtils.UITAG,"fired off in activity")
+            }
+        }
+
         toastText.observeForever { toastText ->
             if(!toastText.isNullOrEmpty()){
-                val toastView = CustomToastView(this, hasSucceded)
+
+                val toastView = CustomToastView(this)
                 toastView.setMessage(toastText)
 
                 val toast = Toast(this)
                 toast.duration = LENGTH_SHORT
                 toast.view = toastView
+                toast.setGravity(Gravity.TOP or Gravity.FILL_HORIZONTAL, 0, 200)
                 toast.show()
             }
         }
 
     }
+
 
 
     private fun enableAntiScreenshoting(){
@@ -150,6 +169,8 @@ class MainActivity : ComponentActivity() {
 
         var link = MutableLiveData<String>();
 
+        var snackBarText: MutableLiveData<String> = MutableLiveData<String>();
+
         var toastText: MutableLiveData<String> = MutableLiveData<String>();
 
         var hasSucceded: Boolean? = null;
@@ -184,6 +205,19 @@ class MainActivity : ComponentActivity() {
             if (lang == null){    lang = Resources.getSystem().getConfiguration().locale.getLanguage();
             }
             return lang
+        }
+
+
+        fun showSnackBar(scope: CoroutineScope, state: SnackbarHostState, text:
+        String?, hasSucceded: Boolean?
+        ){
+            if(text!=null){
+                if(hasSucceded!=null){
+                    scope.launch {
+                        state.showSnackbar(text)
+                    }
+                }
+            }
         }
     }
 

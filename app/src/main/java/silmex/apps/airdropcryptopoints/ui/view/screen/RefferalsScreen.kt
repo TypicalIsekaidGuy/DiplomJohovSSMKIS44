@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -42,6 +43,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -54,6 +56,7 @@ import silmex.apps.airdropcryptopoints.ui.theme.AltBG
 import silmex.apps.airdropcryptopoints.ui.theme.AltBorder
 import silmex.apps.airdropcryptopoints.ui.theme.ButtonTextColor
 import silmex.apps.airdropcryptopoints.ui.theme.MainTextColor
+import silmex.apps.airdropcryptopoints.ui.theme.MiniBorder
 import silmex.apps.airdropcryptopoints.ui.theme.OffTextColor
 import silmex.apps.airdropcryptopoints.ui.theme.ShadeBackground
 import silmex.apps.airdropcryptopoints.ui.theme.WhiteText
@@ -77,9 +80,14 @@ fun RefferalsScreen(viewModel: RefferralViewModel,mainViewModel: MainViewModel, 
     val limitOfCode = viewModel.limitOfCode
     val currentBoost by mainViewModel.currentChosenMultipliyer.observeAsState()
     val claimedBalance by mainViewModel.claimedBalance.observeAsState()
+    val canGetRefferalBonus by mainViewModel.canGetRefferalBonus.observeAsState()
 
+    var didLaunch = remember { mutableStateOf(false) }
     LaunchedEffect(true) {
         onLaunch()
+        if(didLaunch.value){
+            didLaunch.value = true
+        }
     }
 
     Column(
@@ -94,7 +102,7 @@ fun RefferalsScreen(viewModel: RefferralViewModel,mainViewModel: MainViewModel, 
         },{
             viewModel.copyCodeOnClick()
         })
-        InputRefferalBlock(limitOfCode,textValue) {
+        InputRefferalBlock(canGetRefferalBonus!!,limitOfCode,textValue) {
             viewModel.getBonusFromCodeOnClick()
         }
         Image(
@@ -187,17 +195,17 @@ fun CopyCodeBlock(code:Int,onClick1:()->Unit,onClick2: () -> Unit){
 }
 
 @Composable
-fun InputRefferalBlock(limitOfCode: Int,textValue: MutableLiveData<String>, onClick:()->Unit){
+fun InputRefferalBlock(isActive: Boolean, limitOfCode: Int,textValue: MutableLiveData<String>, onClick:()->Unit){
     val textValueState = textValue.observeAsState(initial = "")
     Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier
         .height(64.dp)
         .border(
-            1.dp, ButtonTextColor,
+            1.dp, if(isActive) ButtonTextColor else MiniBorder,
             RoundedCornerShape(16.dp)
         )
         .background(AltBG, RoundedCornerShape(16.dp))
         .fillMaxWidth(), verticalAlignment = Alignment.CenterVertically){
-        Image(painterResource(id = R.drawable.get_left_icon),"",modifier = Modifier
+        Image(painterResource(id = if(isActive) R.drawable.referrals_active_icon else R.drawable.referrals_inactive_icon),"",modifier = Modifier
             .fillMaxWidth(0.1f)
             .padding(start = 12.dp))
 
@@ -218,6 +226,8 @@ fun InputRefferalBlock(limitOfCode: Int,textValue: MutableLiveData<String>, onCl
         Box(modifier = Modifier.fillMaxWidth(0.7f)){
 
             BasicTextField(
+                enabled = isActive,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 value = textValueState.value,
                 onValueChange = { newText ->
                     isOverCount = newText.count() <= limitOfCode
@@ -235,7 +245,7 @@ fun InputRefferalBlock(limitOfCode: Int,textValue: MutableLiveData<String>, onCl
                 textStyle = TextStyle(
                     fontFamily = itimStyle,
                     fontSize = average_text_size,
-                    color =MainTextColor
+                    color = MainTextColor
                 ),
                 decorationBox = { innerTextField ->
                     Box(
@@ -245,7 +255,7 @@ fun InputRefferalBlock(limitOfCode: Int,textValue: MutableLiveData<String>, onCl
 
                     ) {
                         if(isTextEmpty){
-                            Text("Enter code here", fontSize = average_text_size, color = OffTextColor, fontFamily = itimStyle, textAlign = TextAlign.Start)
+                            Text(if(isActive)"Enter code hereпо" else "You have received a referral", fontSize = average_text_size, color = OffTextColor, fontFamily = itimStyle, textAlign = TextAlign.Start)
                         }
 
                         innerTextField()
@@ -261,9 +271,10 @@ fun InputRefferalBlock(limitOfCode: Int,textValue: MutableLiveData<String>, onCl
             animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing)
         )
         Box(Modifier.padding(end = 12.dp)){
-            Image(painterResource(id = R.drawable.get_right_icon),"",modifier = Modifier
+            Image(painterResource(id = if(isActive) R.drawable.get_right_icon else R.drawable.get_right_icon_inactive),"",modifier = Modifier
                 .size((48 - animatedPaddingValues).dp)
                 .clickable(
+                    enabled = isActive,
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null
                 ) {
