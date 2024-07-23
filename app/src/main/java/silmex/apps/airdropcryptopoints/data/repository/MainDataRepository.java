@@ -61,7 +61,7 @@ public class MainDataRepository {
     public float minValue =0.01f;
     public float maxValue =49.74f;
     public int convertValueToOneUsdt =198000;
-    public long widthdrawalDelay =100*1000;//Todo change to 86400000
+    public long widthdrawalDelay =1000*1000;//Todo change to 86400000
     public MutableLiveData<Boolean> canWithdraw =new MutableLiveData<>(false);
 
 
@@ -74,7 +74,7 @@ public class MainDataRepository {
     //timer vars
     public CountDownTimer mainTimer;
     public CountDownTimer withdrawalCooldownTimer;
-    public static final long fullTimerDuration = 14400000/600;//TODO change to 14400000
+    public static final long fullTimerDuration = 14400000;//TODO change to 14400000
     public MutableLiveData<Long> millisUntilFinishedLiveData = new MutableLiveData<>(0L);
     public MutableLiveData<Long> cooldownmillisUntilFinishedLiveData = new MutableLiveData<>(0L);
     public long tempLeftTime = 0;
@@ -193,7 +193,7 @@ public class MainDataRepository {
         MethodUtils.safeSetValue(claimedBalance,0f);
     }
     public Float getBalanceForWithdrawal(){
-        int crypto_points = Objects.requireNonNull(balance.getValue()).intValue();
+        int crypto_points = Objects.requireNonNull(claimedBalance.getValue()).intValue();
         float bucks = (float) crypto_points /convertValueToOneUsdt;
         if(bucks<minValue){
             return minValue;

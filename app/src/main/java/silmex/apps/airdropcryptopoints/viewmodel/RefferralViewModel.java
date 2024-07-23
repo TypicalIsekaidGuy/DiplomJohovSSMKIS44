@@ -74,56 +74,43 @@ public class RefferralViewModel extends ViewModel {
 
     //main functions
     private void setUpObservers(){
-        mainDataRepository.balance.observeForever(new Observer<Float>() {
-            @Override
-            public void onChanged(Float newValue) {
+        mainDataRepository.balance.observeForever(newValue -> balance.postValue(newValue));
+        mainDataRepository.isActive.observeForever(newValue -> isMining.postValue(newValue));
+        mainDataRepository.referralCode.observeForever(newValue -> {
+            String target = refferralTextValue2.getValue();
+            if(target!=null){
+                target = target.replace("#CODE#", Objects.requireNonNull(newValue).toString());
 
-                balance.postValue(newValue);
+                refferralTextValue2.postValue(target);
             }
-        });
-        mainDataRepository.isActive.observeForever(new Observer<Boolean>() {
-            @Override
-            public void onChanged(Boolean newValue) {
-
-                isMining.postValue(newValue);
-            }
-        });
-        mainDataRepository.referralCode.observeForever(new Observer<Integer>() {
-            @Override
-            public void onChanged(Integer newValue) {
-                String target = refferralTextValue2.getValue();
-                if(target!=null){
-                    target = target.replace("#CODE#", Objects.requireNonNull(newValue).toString());
-
-                    refferralTextValue2.postValue(target);
-                }
-                refCode.postValue(newValue);
-                Log.d("REFFERAL1","WORKED" + refferralTextValue2.getValue());
-                Log.d("REFFERAL1","WORKED" + newValue);
-            }
+            refCode.postValue(newValue);
+            Log.d("REFFERAL1","WORKED" + refferralTextValue2.getValue());
+            Log.d("REFFERAL1","WORKED" + newValue);
         });
 
-        mainDataRepository.refferalText1.observeForever(newValue -> refferralTextValue1.postValue(newValue));
-
-        mainDataRepository.refferealText2.observeForever(new Observer<String>() {
-            @Override
-            public void onChanged(String newValue) {
-                if(refCode.getValue()!=null&&refCode.getValue()!=0){
-                    String target = newValue.replace("#CODE#",refCode.getValue().toString());
-                    target = target.replace("#LINK#","https://play.google.com/store/apps/details?id="+MainActivity.Companion.getSource());
-
-                    refferralTextValue2.postValue(target);
+        mainDataRepository.refferalText1.observeForever(
+                newValue ->{
+                    String target = newValue.replace("#CODE#", Objects.requireNonNull(refCode).toString());
+                    refferralTextValue1.postValue(target);
                 }
-                else if(mainDataRepository.referralCode.getValue()!=null&&mainDataRepository.referralCode.getValue()!=0){
-                    String target = newValue.replace("#CODE#",mainDataRepository.referralCode.getValue().toString());
-                    target = target.replace("#LINK#","https://play.google.com/store/apps/details?id="+MainActivity.Companion.getSource());
+        );
 
-                    refferralTextValue2.postValue(target);
-                }
-                Log.d("REFFERAL2","WORKED" + refferralTextValue2.getValue());
-                Log.d("REFFERAL3","WORKED" + refCode.getValue());
-                Log.d("REFFERAL4","WORKED" + mainDataRepository.referralCode.getValue());
+        mainDataRepository.refferealText2.observeForever(newValue -> {
+            if(refCode.getValue()!=null&&refCode.getValue()!=0){
+                String target = newValue.replace("#CODE#",refCode.getValue().toString());
+                target = target.replace("#LINK#","https://play.google.com/store/apps/details?id="+MainActivity.Companion.getSource());
+
+                refferralTextValue2.postValue(target);
             }
+            else if(mainDataRepository.referralCode.getValue()!=null&&mainDataRepository.referralCode.getValue()!=0){
+                String target = newValue.replace("#CODE#",mainDataRepository.referralCode.getValue().toString());
+                target = target.replace("#LINK#","https://play.google.com/store/apps/details?id="+MainActivity.Companion.getSource());
+
+                refferralTextValue2.postValue(target);
+            }
+            Log.d("REFFERAL2","WORKED" + refferralTextValue2.getValue());
+            Log.d("REFFERAL3","WORKED" + refCode.getValue());
+            Log.d("REFFERAL4","WORKED" + mainDataRepository.referralCode.getValue());
         });
 
         mainDataRepository.millisUntilFinishedLiveData.observeForever(new Observer<Long>() {

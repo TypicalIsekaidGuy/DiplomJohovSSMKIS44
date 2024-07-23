@@ -255,7 +255,7 @@ fun InputRefferalBlock(isActive: Boolean, limitOfCode: Int,textValue: MutableLiv
 
                     ) {
                         if(isTextEmpty){
-                            Text(if(isActive)"Enter code hereпо" else "You have received a referral", fontSize = average_text_size, color = OffTextColor, fontFamily = itimStyle, textAlign = TextAlign.Start)
+                            Text(if(isActive)"Enter code here" else "You have received a referral", fontSize = average_text_size, color = OffTextColor, fontFamily = itimStyle, textAlign = TextAlign.Start)
                         }
 
                         innerTextField()

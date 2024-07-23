@@ -308,7 +308,7 @@ public class MainViewModel extends ViewModel {
                     MethodUtils.safeSetValue(mainDataRepository.yourRefferalBonus,configDTO.referalBonusToUser);
                     MethodUtils.safeSetValue(mainDataRepository.otherRefferalBonus,configDTO.referalBonusForOthers);
                     mainDataRepository.convertValueToOneUsdt = configDTO.convertValueToOneUsdt;
-                    mainDataRepository.widthdrawalDelay = 100*1000;//Todo change back
+                    mainDataRepository.widthdrawalDelay = 1000*1000;//Todo change back
 
                     MethodUtils.safeSetValue(mainDataRepository.learningText,configDTO.learningText);
                     MethodUtils.safeSetValue(mainDataRepository.refferalText1,configDTO.refferalText1);
