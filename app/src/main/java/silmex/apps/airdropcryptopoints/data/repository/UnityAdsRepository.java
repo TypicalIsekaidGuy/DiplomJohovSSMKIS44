@@ -104,6 +104,8 @@ public class UnityAdsRepository implements IUnityAdsInitializationListener {
                 false,
                 this
         );
+        Log.d("NETWORKTAG","1"+MainDataRepository.unityID);
+        Log.d("NETWORKTAG","1"+MainDataRepository.unityBlock);
         UnityAds.load(MainDataRepository.unityBlock, loadListener);
     }
 

@@ -79,13 +79,14 @@ fun Navigation(mainViewModel: MainViewModel, scope: CoroutineScope, snackbarHost
             MainActivity.hasSucceded
         )
     }
-
     Scaffold(
         snackbarHost = {
             SnackbarHost(
                 modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = 48.dp),
                 hostState = snackbarHostState,
-                snackbar = { CustomSnackbar(it)}
+                snackbar = {
+                    CustomSnackbar(it)
+                }
             )
         },) {
         Box(

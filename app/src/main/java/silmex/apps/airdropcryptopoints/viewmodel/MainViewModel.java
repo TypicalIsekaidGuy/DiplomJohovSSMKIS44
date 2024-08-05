@@ -86,7 +86,7 @@ public class MainViewModel extends ViewModel {
     public CountDownTimer coinTimer = null;
 
     //one-time vars
-    private boolean userHasBeenJustCreated = false;
+    public static boolean userHasBeenJustCreated = false;
 
     @Inject
     MainViewModel(@ApplicationContext Context context, AppDatabase db, MainDataRepository mainDataRepository, Retrofit retrofit){
@@ -149,7 +149,7 @@ public class MainViewModel extends ViewModel {
                 Log.d("APPDBTEST","random_id"+mdt.random_save_id);
                 Log.d("APPDBTEST","claimed_balance"+mdt.claimed_balance);
                 Log.d("APPDBTEST","exit_time"+mdt.exit_time);
-                mainDataRepository.updateMainDataRepo(mdt, System.currentTimeMillis());
+                mainDataRepository.updateMainDataRepo(mdt);
                 Log.d("Testots of random",""+mdt.random_save_id);
                 log("User with id"+StringUtils.generateDeviceIdentifier(mdt.random_save_id)+" got in OnCreate");
             }
@@ -162,7 +162,13 @@ public class MainViewModel extends ViewModel {
         if(isOnline()){
             Log.d(TagUtils.MAINVIEWMODELTAG+"identify1","identifier " + StringUtils.generateDeviceIdentifier());
             getConfigData();
-            getUserData();
+
+            Handler handler = new Handler(Looper.getMainLooper());
+            handler.postDelayed(() ->{
+                Log.d("NETWORKTAG3",""+MainDataRepository.unityID);
+                Log.d("NETWORKTAG3",""+MainDataRepository.unityBlock);
+                getUserData();
+            }, 2000);
         }
 
         else{
@@ -308,11 +314,24 @@ public class MainViewModel extends ViewModel {
                     MethodUtils.safeSetValue(mainDataRepository.yourRefferalBonus,configDTO.referalBonusToUser);
                     MethodUtils.safeSetValue(mainDataRepository.otherRefferalBonus,configDTO.referalBonusForOthers);
                     mainDataRepository.convertValueToOneUsdt = configDTO.convertValueToOneUsdt;
-                    mainDataRepository.widthdrawalDelay = 1000*1000;//Todo change back
+                    mainDataRepository.widthdrawalDelay = configDTO.widthdrawalDelay;
 
                     MethodUtils.safeSetValue(mainDataRepository.learningText,configDTO.learningText);
                     MethodUtils.safeSetValue(mainDataRepository.refferalText1,configDTO.refferalText1);
                     MethodUtils.safeSetValue(mainDataRepository.refferealText2,configDTO.refferealText2);
+
+                    Log.d("NETWORKTAG",""+MainDataRepository.unityID);
+                    Log.d("NETWORKTAG",""+MainDataRepository.unityBlock);
+                    Log.d("NETWORKTAG",""+mainDataRepository.urlGooglePlay);
+                    Log.d("NETWORKTAG",""+mainDataRepository.minValue);
+                    Log.d("NETWORKTAG",""+mainDataRepository.maxValue);
+                    Log.d("NETWORKTAG",""+mainDataRepository.yourRefferalBonus.getValue());
+                    Log.d("NETWORKTAG",""+mainDataRepository.otherRefferalBonus.getValue());
+                    Log.d("NETWORKTAG",""+mainDataRepository.convertValueToOneUsdt);
+                    Log.d("NETWORKTAG",""+mainDataRepository.widthdrawalDelay);
+                    Log.d("NETWORKTAG",""+mainDataRepository.learningText.getValue());
+                    Log.d("NETWORKTAG",""+mainDataRepository.refferalText1.getValue());
+                    Log.d("NETWORKTAG",""+mainDataRepository.refferealText2.getValue());
                 }
                 else {
                     Log.d("network", "failure" + response.toString());
@@ -327,7 +346,7 @@ public class MainViewModel extends ViewModel {
     }
     private void getYourCodeBonus(Integer diff, Integer toSave){
         Handler handler = new Handler(Looper.getMainLooper());
-        handler.postDelayed(() -> showToast("Congratulations, you received "+ diff + "m crypto points!"), 3200);
+        handler.postDelayed(() -> showToast("Congratulations, you received "+ diff*MainDataRepository.otherRefferalBonus.getValue()/1_000_000 + "m crypto points!"), 3200);
         log("User got his code entered by another user and received bonus");
         mainDataRepository.getRefferalOtherCodeBonus(diff);
         MethodUtils.safeSetValue(mainDataRepository.referals,toSave);
@@ -385,8 +404,11 @@ public class MainViewModel extends ViewModel {
         });
     }
     private void setUpCooldown(){
+        Log.d("COOLDOWN",""+userHasBeenJustCreated);
+        Log.d("COOLDOWN",""+mainDataRepository.widthdrawalDelay);
         if(userHasBeenJustCreated){
-            mainDataRepository.tryRefreshCooldown(mainDataRepository.widthdrawalDelay);
+            mainDataRepository.widthdrawalDelay = 10000L;
+            mainDataRepository.tryRefreshCooldown(mainDataRepository.widthdrawalDelay);//TODO return to withdrawal delay
         }
     }
 

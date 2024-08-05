@@ -230,6 +230,11 @@ fun InputRefferalBlock(isActive: Boolean, limitOfCode: Int,textValue: MutableLiv
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 value = textValueState.value,
                 onValueChange = { newText ->
+                    for(i in newText){
+                        if (!i.isDigit()){
+                            return@BasicTextField
+                        }
+                    }
                     isOverCount = newText.count() <= limitOfCode
                     if(isOverCount)
                         textValue.value = newText

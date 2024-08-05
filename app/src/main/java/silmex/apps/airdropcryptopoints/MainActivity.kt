@@ -214,6 +214,7 @@ class MainActivity : ComponentActivity() {
             if(text!=null){
                 if(hasSucceded!=null){
                     scope.launch {
+                        state.currentSnackbarData?.dismiss()
                         state.showSnackbar(text)
                     }
                 }

@@ -138,7 +138,6 @@ public class WithdrawalViewModel extends ViewModel {
     //onClick functions
     public void withdrawalOnClick(){
         if(isOnline()){
-            if(Boolean.FALSE.equals(isMining.getValue())){
                 Log.d("usercreated","withdraw "+canWithdraw.getValue());
                 if(canWithdraw.getValue()!=null&&canWithdraw.getValue()){
                     WithdrawalService serviceTrans = RetrofitClient.getClient().create(WithdrawalService.class);
@@ -184,15 +183,15 @@ public class WithdrawalViewModel extends ViewModel {
                     Log.d("REPO!!","withdraw "+mainDataRepository.cooldownmillisUntilFinishedLiveData.getValue());
                     showSnackBar("The withdrawal will be available after "+getTimeCooldown(cooldownmillisUntilFinishedLiveData),false);
                 }
-            }
-            else{
-                showSnackBar("Wait for mining to end after "+getTimeCooldown(millisUntilFinishedLiveData),false);
-            }
+
         }
         else{
             MainViewModel.throwConnectionError(CONNECTION_ERROR_ENUM.WITHDRAWAL_CLICK);
         }
 
+        Log.d("NETWORKTAG",""+mainDataRepository.urlGooglePlay.getValue());
+        Log.d("NETWORKTAG",""+mainDataRepository.minValue);
+        Log.d("NETWORKTAG",""+mainDataRepository.maxValue);
     }
 
     public void copyCodeOnClick(String text){

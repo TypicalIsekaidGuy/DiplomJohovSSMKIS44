@@ -115,7 +115,7 @@ fun WithdrawalScreen(viewModel: WithdrawalViewModel,mainViewModel: MainViewModel
         BalanceBar(claimedBalance!!,balance!!,progress!!, isMining!!,coins!!,currentBoost!!.value, mainViewModel::removeCoin)
         Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
 
-            TimerText(cooldownMilis,canWithdraw!!, isMining!!,milis!!)
+            TimerText(cooldownMilis,canWithdraw!!)
 
 /*            Text(
                 text = "Withdrawal will be available after a day",
@@ -148,48 +148,7 @@ fun WithdrawalScreen(viewModel: WithdrawalViewModel,mainViewModel: MainViewModel
 }
 
 @Composable
-fun TimerText(cooldownMilis: Long?, canWithdraw: Boolean, isMining: Boolean, milis: Long){
-    if(isMining){
-
-
-        val hours = ((milis/1000) / 3600).toInt()
-        val minutes = (((milis/1000) / 60)%60).toInt()
-        val seconds = ((milis/1000) % 60).toInt()
-
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center){
-            Text(
-                text = "Mining will end in ",
-                color = MainTextColor,
-                fontFamily = itimStyle,
-                fontSize = average_text_size,
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-            )
-            Row {
-                AnimatedTimeUnit(timeUnit = hours / 10,WithdrawalTextColor) // Tens place of minutes
-                AnimatedTimeUnit(timeUnit = hours % 10,WithdrawalTextColor) // Tens place of minutes
-                Text(//usdt
-                    text = ":",
-                    color = WithdrawalTextColor,
-                    textAlign = TextAlign.Center,fontFamily = itimStyle,
-                    fontSize = 18.sp
-                )
-                AnimatedTimeUnit(timeUnit = minutes / 10,WithdrawalTextColor) // Tens place of minutes
-                AnimatedTimeUnit(timeUnit = minutes % 10,WithdrawalTextColor) // Units place of minutes
-
-                Text(//usdt
-                    text = ":",
-                    color = WithdrawalTextColor,
-                    textAlign = TextAlign.Center,fontFamily = itimStyle,
-                    fontSize = 18.sp
-                )
-                AnimatedTimeUnit(timeUnit = seconds / 10,WithdrawalTextColor) // Tens place of seconds
-                AnimatedTimeUnit(timeUnit = seconds % 10,WithdrawalTextColor) // Units place of seconds
-            }
-        }
-    }
-    else{
-
+fun TimerText(cooldownMilis: Long?, canWithdraw: Boolean){
         if(cooldownMilis==null||canWithdraw){
 
             Text(
@@ -239,7 +198,6 @@ fun TimerText(cooldownMilis: Long?, canWithdraw: Boolean, isMining: Boolean, mil
                 }
             }
         }
-    }
 
 }
 

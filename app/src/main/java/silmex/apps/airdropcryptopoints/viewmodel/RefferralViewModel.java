@@ -79,13 +79,14 @@ public class RefferralViewModel extends ViewModel {
         mainDataRepository.referralCode.observeForever(newValue -> {
             String target = refferralTextValue2.getValue();
             if(target!=null){
-                target = target.replace("#CODE#", Objects.requireNonNull(newValue).toString());
+                target = target.replace(Objects.requireNonNull(refCode.getValue()).toString(), Objects.requireNonNull(newValue).toString());
 
                 refferralTextValue2.postValue(target);
             }
-            refCode.postValue(newValue);
             Log.d("REFFERAL1","WORKED" + refferralTextValue2.getValue());
-            Log.d("REFFERAL1","WORKED" + newValue);
+            Log.d("REFFERAL1","WORKED target" + target);
+            Log.d("REFFERAL1","WORKED" + Objects.requireNonNull(refCode.getValue()).toString());
+            refCode.postValue(newValue);
         });
 
         mainDataRepository.refferalText1.observeForever(

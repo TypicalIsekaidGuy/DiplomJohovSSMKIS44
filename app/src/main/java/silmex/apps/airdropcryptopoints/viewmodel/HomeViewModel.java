@@ -4,6 +4,8 @@ import static silmex.apps.airdropcryptopoints.data.repository.MainDataRepository
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -92,7 +94,13 @@ public class HomeViewModel extends ViewModel implements UpgradeWheelCallBack {
 
     public void initializeUnity(){
         if(isOnline()){
-            unityAdsRepository.initializeUnity();
+            Handler handler = new Handler(Looper.getMainLooper());
+            handler.postDelayed(() ->{
+                Log.d("NETWORKTAG2",""+MainDataRepository.unityID);
+                Log.d("NETWORKTAG2",""+MainDataRepository.unityBlock);
+                unityAdsRepository.initializeUnity();
+            }, 2000);
+
         }
         else{
             MainViewModel.throwConnectionError(CONNECTION_ERROR_ENUM.UNITY_INITIALIZATION);

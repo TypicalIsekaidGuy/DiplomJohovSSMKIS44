@@ -20,6 +20,7 @@ import silmex.apps.airdropcryptopoints.data.model.Transaction;
 import silmex.apps.airdropcryptopoints.utils.IntegerUtils;
 import silmex.apps.airdropcryptopoints.utils.MethodUtils;
 import silmex.apps.airdropcryptopoints.utils.TagUtils;
+import silmex.apps.airdropcryptopoints.viewmodel.MainViewModel;
 
 public class MainDataRepository {
 
@@ -48,7 +49,7 @@ public class MainDataRepository {
     public MutableLiveData<Integer> referralCode = new MutableLiveData<Integer>(Math.abs(IntegerUtils.generateRandomInteger()));
     public MutableLiveData<String> enteredCode = new MutableLiveData<>("");
     public MutableLiveData<Integer> yourRefferalBonus = new MutableLiveData<>(1000000);
-    public MutableLiveData<Integer> otherRefferalBonus =  new MutableLiveData<>(1000000);
+    public static MutableLiveData<Integer> otherRefferalBonus =  new MutableLiveData<>(1000000);
     public MutableLiveData<Integer> referals = new MutableLiveData<>(0);
     public boolean hasNotEnteredCode(){
         return enteredCode.getValue().isEmpty();
@@ -61,7 +62,7 @@ public class MainDataRepository {
     public float minValue =0.01f;
     public float maxValue =49.74f;
     public int convertValueToOneUsdt =198000;
-    public long widthdrawalDelay =1000*1000;//Todo change to 86400000
+    public long widthdrawalDelay =86400000;
     public MutableLiveData<Boolean> canWithdraw =new MutableLiveData<>(false);
 
 
@@ -74,7 +75,7 @@ public class MainDataRepository {
     //timer vars
     public CountDownTimer mainTimer;
     public CountDownTimer withdrawalCooldownTimer;
-    public static final long fullTimerDuration = 14400000;//TODO change to 14400000
+    public static final long fullTimerDuration = 14400000;
     public MutableLiveData<Long> millisUntilFinishedLiveData = new MutableLiveData<>(0L);
     public MutableLiveData<Long> cooldownmillisUntilFinishedLiveData = new MutableLiveData<>(0L);
     public long tempLeftTime = 0;
@@ -132,7 +133,7 @@ public class MainDataRepository {
     }
 
     public void refreshCooldown(long estimatedEndTime){
-        Log.d("Repo","refreshed "+estimatedEndTime);
+        Log.d("Repo","refreshed in the cooldown"+estimatedEndTime);
             MethodUtils.safeSetValue(canWithdraw,false);
             withdrawalCooldownTimer = new CountDownTimer(estimatedEndTime, 1000) {
                 public void onTick(long millisUntilFinished) {
@@ -148,7 +149,6 @@ public class MainDataRepository {
     }
 
     public void turnOffCooldownTimer(){
-
         Log.d("Repo","turned off cooldown");
         MethodUtils.safeSetValue(canWithdraw,true);
         if(withdrawalCooldownTimer!=null){
@@ -202,7 +202,7 @@ public class MainDataRepository {
     }
 
     //update when loading app
-    public void updateMainDataRepo(MainDataTable mdt, Long currentTime){
+    public void updateMainDataRepo(MainDataTable mdt){
         MethodUtils.safeSetValue(random_for_save,mdt.random_save_id);
         MethodUtils.safeSetValue(referals,mdt.referals);
         tempRandom = mdt.random_save_id;
@@ -232,6 +232,9 @@ public class MainDataRepository {
             if(timerDiffernce<=0){
 
                 MethodUtils.safeSetValue(balance,mdt.balance + mdt.currentChosenMultipliyerValue*Math.abs(tempLeftTime));
+                Log.d("BALANCE",""+mdt.balance + mdt.currentChosenMultipliyerValue*Math.abs(tempLeftTime));
+                Log.d("BALANCE",""+mdt.currentChosenMultipliyerValue);
+                Log.d("BALANCE",""+mdt.balance);
                 MethodUtils.safeSetValue(millisUntilFinishedLiveData,Math.abs(timerDiffernce*1000L));
 
                 new Handler(Looper.getMainLooper()).post(new Runnable() {
@@ -251,23 +254,25 @@ public class MainDataRepository {
         else{
             MethodUtils.safeSetValue(balance,mdt.balance);
         }
-        if(Boolean.FALSE.equals(canWithdraw.getValue())||mdt.cooldown_estimated_end_time==0){
-            long temp  = (serverTime.getTime() - mdt.exit_time);
-            Log.d("Repo111","fired off" +temp);
-            Log.d("Repo111","fired off" +mdt.exit_time);
-            Log.d("Repo111","fired off" +serverTime.getTime());
-            if(temp-mdt.cooldown_estimated_end_time<=0){
-                Log.d("Repo111","fired off" +(mdt.cooldown_estimated_end_time-temp));
-                tryRefreshCooldown(mdt.cooldown_estimated_end_time-temp);
+        if(!MainViewModel.userHasBeenJustCreated){
+            if(Boolean.FALSE.equals(canWithdraw.getValue())||mdt.cooldown_estimated_end_time==0){
+                long temp  = (serverTime.getTime() - mdt.exit_time);
+                Log.d("Repo111","fired off" +temp);
+                Log.d("Repo111","fired off" +mdt.exit_time);
+                Log.d("Repo111","fired off" +serverTime.getTime());
+                if(temp-mdt.cooldown_estimated_end_time<=0){
+                    Log.d("Repo111","fired off" +(mdt.cooldown_estimated_end_time-temp));
+                    tryRefreshCooldown(mdt.cooldown_estimated_end_time-temp);
+                }
+                else{
+                    MethodUtils.safeSetValue(canWithdraw,true);
+                    MethodUtils.safeSetValue(cooldownmillisUntilFinishedLiveData,0L);
+                }
             }
             else{
-                MethodUtils.safeSetValue(canWithdraw,true);
+                MethodUtils.safeSetValue(canWithdraw,mdt.can_withdraw);
                 MethodUtils.safeSetValue(cooldownmillisUntilFinishedLiveData,0L);
             }
-        }
-        else{
-            MethodUtils.safeSetValue(canWithdraw,mdt.can_withdraw);
-            MethodUtils.safeSetValue(cooldownmillisUntilFinishedLiveData,0L);
         }
     }
 }
