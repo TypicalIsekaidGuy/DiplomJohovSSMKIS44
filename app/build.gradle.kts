@@ -8,11 +8,11 @@ plugins {
     correctErrorTypes true
 }*/
 android {
-    namespace = "silmex.apps.airdropcryptopoints"
+    namespace = "com.johov.bitcoin"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "silmex.apps.airdropcryptopoints"
+        applicationId = "com.johov.bitcoin"
         minSdk = 24
         targetSdk = 34
         versionCode = 1

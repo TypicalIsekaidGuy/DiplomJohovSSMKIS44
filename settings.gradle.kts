@@ -19,6 +19,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "AirDrop Crypto Points"
+rootProject.name = "Bitcoin Earner"
 include(":app")
  
